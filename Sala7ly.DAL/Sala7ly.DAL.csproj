@@ -8,9 +8,6 @@
 
   <ItemGroup>
     <Folder Include="Common\" />
-    <Folder Include="DataBase\Configurations\" />
-    <Folder Include="Entities\" />
-    <Folder Include="Enums\" />
     <Folder Include="Repositories\Abstraction\" />
     <Folder Include="Repositories\Implementation\" />
   </ItemGroup>

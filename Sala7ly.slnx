@@ -1,0 +1,5 @@
+<Solution>
+  <Project Path="Sala7ly.API/Sala7ly.API.csproj" />
+  <Project Path="Sala7ly.BLL/Sala7ly.BLL.csproj" />
+  <Project Path="Sala7ly.DAL/Sala7ly.DAL.csproj" />
+</Solution>

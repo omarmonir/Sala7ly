@@ -1,4 +1,7 @@
 
+using Microsoft.EntityFrameworkCore;
+using Sala7ly.DAL.DataBase;
+
 namespace Sala7ly.API
 {
     public class Program
@@ -12,6 +15,13 @@ namespace Sala7ly.API
             builder.Services.AddControllers();
             // Learn more about configuring OpenAPI at https://aka.ms/aspnet/openapi
             builder.Services.AddOpenApi();
+
+
+
+            builder.Services.AddDbContext<AppDbContext>(options =>
+                options.UseSqlServer(
+                    builder.Configuration.GetConnectionString("ServerConnection")));
+
 
             var app = builder.Build();
 

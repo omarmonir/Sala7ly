@@ -10,9 +10,12 @@
     <Folder Include="Helper\" />
     <Folder Include="Mapper\" />
     <Folder Include="DTOs\" />
-    <Folder Include="Common\" />
     <Folder Include="Services\Abstraction\" />
     <Folder Include="Services\Implementation\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Sala7ly.DAL\Sala7ly.DAL.csproj" />
   </ItemGroup>
 
 </Project>

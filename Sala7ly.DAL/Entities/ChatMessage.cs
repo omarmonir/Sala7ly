@@ -5,34 +5,36 @@ using System.Text;
 
 namespace Sala7ly.DAL.Entities
 {
-    public class ChatMessage
+    public class ChatMessage : BaseEntity
     {
 
-        public Guid Id { get; set; } = Guid.NewGuid();
+        public ChatMessage()
+        {
+            
+        }
+        public int RequestId { get; private set; }
 
-        public Guid RequestId { get; set; }
+        public string SenderId { get; private set; }
 
-        public Guid SenderId { get; set; }
+        public string? Content { get; private set; }
 
-        public string? Content { get; set; }
+        public string[]? AttachmentUrls { get; private set; }
 
-        public string[]? AttachmentUrls { get; set; }
+        public ChatMessageType MessageType { get; private set; }
 
-        public ChatMessageType MessageType { get; set; }
+        public int? DurationSeconds { get; private set; }
 
-        public int? DurationSeconds { get; set; }
+        public bool IsRead { get; private set; }
 
-        public bool IsRead { get; set; }
+        public DateTime? ReadAt { get; private set; }
 
-        public DateTime? ReadAt { get; set; }
-
-        public DateTime SentAt { get; set; } = DateTime.UtcNow;
+        public DateTime SentAt { get; private set; } = DateTime.UtcNow;
 
 
         // NP
 
-        // public ServiceRequest ServiceRequest { get; set; }
-       // public User Sender { get; set; }
+        public ServiceRequest ServiceRequest { get; private set; }
+        public User Sender { get; private set; }
 
 
     }

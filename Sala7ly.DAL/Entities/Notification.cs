@@ -5,13 +5,11 @@ using System.Text;
 
 namespace Sala7ly.DAL.Entities
 {
-    public class Notification
+    public class Notification : BaseEntity
     {
 
-        public Guid Id { get; set; }
-
-        public Guid UserId { get; set; }   
-        public Guid? ActorId { get; set; }  
+        public string UserId { get; set; }   
+        public string? ActorId { get; set; }  
 
         public NotificationType Type { get; set; }
 
@@ -33,8 +31,8 @@ namespace Sala7ly.DAL.Entities
 
 
         // NP
-        //public User User { get; set; } = null;
-        // public User? Actor { get; set; }
+        public User User { get; set; } = null;
+        public User? Actor { get; set; }
 
 
     }

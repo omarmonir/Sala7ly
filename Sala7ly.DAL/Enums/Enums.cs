@@ -1,0 +1,14 @@
+﻿namespace Sala7ly.DAL.Entities
+{
+    public enum SubscriptionTier { Free, Pro, Premium }
+
+    public enum VerificationDocType { Id, License, Certificate }
+
+    public enum VerificationStatus { Pending, Approved, Rejected }
+
+    public enum EscrowStatus { PendingDeposit, Held, Released, Refunded, Disputed }
+
+    public enum DisputeStatus { Open, InReview, Resolved, Closed }
+
+    public enum PortfolioType { Before, After, General }
+}

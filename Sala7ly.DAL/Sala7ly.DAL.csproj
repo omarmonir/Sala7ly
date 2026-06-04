@@ -7,7 +7,7 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Folder Include="DataBase\Configurations\" />
+    <Folder Include="Common\" />
     <Folder Include="Repositories\Abstraction\" />
     <Folder Include="Repositories\Implementation\" />
   </ItemGroup>

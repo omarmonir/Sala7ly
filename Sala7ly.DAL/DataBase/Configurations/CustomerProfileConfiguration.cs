@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Sala7ly.DAL.Entities;
 
-namespace Sala7ly.DAL.Configurations
+namespace Sala7ly.DAL.DataBase.Configurations
 {
     public class CustomerProfileConfiguration : IEntityTypeConfiguration<CustomerProfile>
     {
@@ -13,6 +13,12 @@ namespace Sala7ly.DAL.Configurations
             builder.Property(c => c.UserId).IsRequired();
             builder.Property(c => c.TotalSpent).HasPrecision(18, 2);
             //builder.Property(c => c.IsBusinessAccount).HasDefaultValue(false);
+
+            // Configure relationship with User
+            builder.HasOne(c => c.User)
+                   .WithOne(u => u.CustomerProfile)
+                   .HasForeignKey<CustomerProfile>(c => c.UserId)
+                   .OnDelete(DeleteBehavior.Restrict);
 
             builder.HasMany<Address>()
                    .WithOne(a => a.Customer)

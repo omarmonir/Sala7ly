@@ -2,19 +2,17 @@
 
 namespace Sala7ly.DAL.Entities
 {
-    public class TechnicianVerification
+    public class TechnicianVerification : BaseEntity
     {
-        public int Id { get; set; }
+        public int TechnicianId { get; private set; }          
+        public int? ReviewedByAdminId { get; private set; }    
 
-        public int TechnicianId { get; set; }          
-        public int? ReviewedByAdminId { get; set; }    
-
-        public VerificationDocType DocType { get; set; }
-        public string DocumentUrl { get; set; }
-        public VerificationStatus Status { get; set; } = VerificationStatus.Pending;
-        public string RejectionReason { get; set; }    
-        public DateTime SubmittedAt { get; set; }
-        public DateTime? ReviewedAt { get; set; }
+        public VerificationDocType DocType { get; private set; }
+        public string DocumentUrl { get; private set; }
+        public VerificationStatus Status { get; private set; } = VerificationStatus.Pending;
+        public string RejectionReason { get; private set; }    
+        public DateTime SubmittedAt { get; private set; }
+        public DateTime? ReviewedAt { get; private set; }
 
 
 
@@ -28,6 +26,6 @@ namespace Sala7ly.DAL.Entities
 
 
         // navigation
-        public TechnicianProfile Technician { get; set; }
+        public TechnicianProfile Technician { get; private set; }
     }
 }

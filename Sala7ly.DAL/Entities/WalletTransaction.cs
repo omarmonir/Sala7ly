@@ -5,16 +5,13 @@ using System.Text;
 
 namespace Sala7ly.DAL.Entities
 {
-    public class WalletTransaction
+    public class WalletTransaction : BaseEntity
     {
 
-        public Guid Id { get; set; } = Guid.NewGuid();
 
-        public Guid WalletId { get; set; }
+        public int WalletId { get; set; }
 
-        public Guid? EscrowId { get; set; }
-
-        public Guid? PromotionId { get; set; }
+        public int? EscrowTransactionId { get; set; }
 
         public decimal Amount { get; set; }
 
@@ -26,14 +23,12 @@ namespace Sala7ly.DAL.Entities
 
         public string Reference { get; set; }
 
-        public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         // NP
         public Wallet Wallet { get; set; }
 
-        // public EscrowTransaction EscrowTransaction { get; set; }
+        public EscrowTransaction EscrowTransaction { get; set; }
 
-        // public Promotion Promotion { get; set; }
 
 
     }

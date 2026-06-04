@@ -5,13 +5,12 @@ using System.Text;
 
 namespace Sala7ly.DAL.Entities
 {
-    public class Ai_Interaction
+    public class Ai_Interaction :BaseEntity
     {
-        public Guid Id { get; set; }
 
-        public Guid? RequestId { get; set; }   
+        public int? RequestId { get; set; }   
 
-        public Guid UserId { get; set; }      
+        public string UserId { get; set; }      
 
         public AiInteractionType InteractionType { get; set; }
 
@@ -29,13 +28,12 @@ namespace Sala7ly.DAL.Entities
 
         public int LatencyMs { get; set; }
 
-        public DateTime CreatedAt { get; set; }
 
 
         // NP
 
-        // public User User { get; set; } = null!;
-       // public ServiceRequest? ServiceRequest { get; set; }
+        public User User { get; set; } = null!;
+        public ServiceRequest? ServiceRequest { get; set; }
 
 
 

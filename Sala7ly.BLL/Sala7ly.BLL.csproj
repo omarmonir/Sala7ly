@@ -10,7 +10,6 @@
     <Folder Include="Helper\" />
     <Folder Include="Mapper\" />
     <Folder Include="DTOs\" />
-    <Folder Include="Common\" />
     <Folder Include="Services\Abstraction\" />
     <Folder Include="Services\Implementation\" />
   </ItemGroup>

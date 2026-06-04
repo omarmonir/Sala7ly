@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Sala7ly.DAL.Entities;
 
-namespace Sala7ly.DAL.Configurations
+namespace Sala7ly.DAL.DataBase.Configurations
 {
     public class ServiceCategoryConfiguration : IEntityTypeConfiguration<ServiceCategory>
     {

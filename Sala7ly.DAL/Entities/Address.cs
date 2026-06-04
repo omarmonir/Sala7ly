@@ -1,24 +1,18 @@
 ﻿using System;
+using System.Collections.Generic;
 
 namespace Sala7ly.DAL.Entities
 {
-    public class Address
+    public class Address : BaseEntity
     {
-        public int Id { get; set; }
+        public int CustomerId { get;  private set; }   
 
-        public int CustomerId { get; set; }   
-
-        public string Street { get; set; }
-        public string City { get; set; }
-        public string District { get; set; }
-        public DateTime CreatedAt { get; set; }
-
-
-
-
-
+        public string Street { get; private set; }
+        public string City { get; private set; }
+        public string District { get; private set; }
 
         // navigation
-        public CustomerProfile Customer { get; set; }
+        public CustomerProfile Customer { get; private set; }
+        public ICollection<ServiceRequest> ServiceRequests { get; private set; }
     }
 }

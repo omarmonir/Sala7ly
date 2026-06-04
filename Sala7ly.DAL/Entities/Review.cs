@@ -4,15 +4,14 @@ using System.Text;
 
 namespace Sala7ly.DAL.Entities
 {
-    public class Review
+    public class Review : BaseEntity
     {
-        public Guid Id { get; set; } = Guid.NewGuid();
 
-        public Guid RequestId { get; set; }
+        public int RequestId { get; set; }
 
-        public Guid ReviewerID { get; set; }
+        public string ReviewerID { get; set; }
 
-        public Guid RevieweeID { get; set; }
+        public string RevieweeID { get; set; }
 
         public int QualityScore { get; set; }
 
@@ -38,11 +37,11 @@ namespace Sala7ly.DAL.Entities
 
         // NP
 
-        // public ServiceRequest ServiceRequest { get; set; }
+        public ServiceRequest ServiceRequest { get; set; }
 
-        // public User Reviewer { get; set; }
+        public User Reviewer { get; set; }
 
-        // public User Reviewee { get; set; }
+        public User Reviewee { get; set; }
 
 
     }

@@ -3,39 +3,43 @@ using System.Collections.Generic;
 
 namespace Sala7ly.DAL.Entities
 {
-    public class TechnicianProfile
+    public class TechnicianProfile : BaseEntity
     {
-        public int Id { get; set; }
+        public TechnicianProfile()
+        {
+            
+        }
+        public  string UserId { get; private set; }            
 
-        public  int UserId { get; set; }            
+        public string Bio { get; private set; }
+        public int ExperienceYears { get; private set; }
+        public double OverallRating { get; private set; }      
+        public int TotalReviews { get; private set; }
+        public int CompletedJobs { get; private set; }  
+        public int CancelledJobs { get; private set; }
+        public string AvgResponseTime { get; private set; }    
 
-        public string Bio { get; set; }
-        public int ExperienceYears { get; set; }
-        public double OverallRating { get; set; }      
-        public int TotalReviews { get; set; }
-        public int CompletedJobs { get; set; }
-        public int CancelledJobs { get; set; }
-        public string AvgResponseTime { get; set; }    
+        public bool IsApproved { get; private set; } = false;  
+        public bool IsFeatured { get; private set; } = false;  // ????????????????????????????????
 
-        public bool IsApproved { get; set; } = false;  
-        public bool IsFeatured { get; set; } = false;  // ????????????????????????????????
+        public SubscriptionTier SubscriptionTier { get; private set; } = SubscriptionTier.Free;
+        public DateTime? SubscriptionExpiresAt { get; private set; }
 
-        public SubscriptionTier SubscriptionTier { get; set; } = SubscriptionTier.Free;
-        public DateTime? SubscriptionExpiresAt { get; set; }
-
-        public float[] EmbeddingVector { get; set; }  // AI semantic matching
-        public DateTime? ApprovedAt { get; set; }
-
-
-
-
+        public float[] EmbeddingVector { get; private set; }  // AI semantic matching
+        public DateTime? ApprovedAt { get; private set; }
 
 
 
 
-        
-        public ICollection<TechnicianVerification> Verifications { get; set; }
-        public ICollection<TechnicianPortfolio> Portfolio { get; set; }
-        public ICollection<TechnicianCategory> Categories { get; set; }
+
+
+
+
+        public User User { get; private set; }
+        public ICollection<TechnicianVerification> Verifications { get; private set; }
+        public ICollection<TechnicianPortfolio> Portfolio { get; private set; }
+        public ICollection<TechnicianCategory> Categories { get; private set; }
+        public ICollection<Bid> Bids { get; private set; }
+        public ICollection<FavoriteTechnician> FavoritedByCustomers { get; private set; }
     }
 }

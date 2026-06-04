@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Sala7ly.DAL.Entities;
 
-namespace Sala7ly.DAL.Configurations
+namespace Sala7ly.DAL.DataBase.Configurations
 {
     public class TechnicianProfileConfiguration : IEntityTypeConfiguration<TechnicianProfile>
     {
@@ -15,6 +15,12 @@ namespace Sala7ly.DAL.Configurations
             builder.Property(t => t.AvgResponseTime).HasMaxLength(50);
             builder.Property(t => t.IsApproved).HasDefaultValue(false);
             builder.Property(t => t.IsFeatured).HasDefaultValue(false);
+
+            // Configure relationship with User
+            builder.HasOne(t => t.User)
+                   .WithOne(u => u.TechnicianProfile)
+                   .HasForeignKey<TechnicianProfile>(t => t.UserId)
+                   .OnDelete(DeleteBehavior.Restrict);
 
             // enum stored as readable text — capped so it isn't nvarchar(max)
             builder.Property(t => t.SubscriptionTier)

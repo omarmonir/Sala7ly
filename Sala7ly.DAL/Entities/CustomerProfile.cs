@@ -4,27 +4,18 @@ using System.Text;
 
 namespace Sala7ly.DAL.Entities
 {
-    public class CustomerProfile
+    public class CustomerProfile : BaseEntity
     {
-
-        public int Id { get; set; }
 
         public int TotalRequests { get; set; }
         public int TotalReviews { get; set; }
         public decimal TotalSpent { get; set; }
         //public bool IsBusinessAccount { get; set; } = false;
-        public int UserId { get; set; }
-
-
-
-
-
-
-
-
-
-
+        public string UserId { get; set; }
 
         public User User { get; set; }
+        public ICollection<Address> Addresses { get; set; }
+        public ICollection<ServiceRequest> ServiceRequests { get; set; }
+        public ICollection<FavoriteTechnician> FavoriteTechnicians { get; set; }
     }
 }

@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Sala7ly.DAL.Entities;
 
-namespace Sala7ly.DAL.Configurations
+namespace Sala7ly.DAL.DataBase.Configurations
 {
     public class TechnicianPortfolioConfiguration : IEntityTypeConfiguration<TechnicianPortfolio>
     {
@@ -13,7 +13,7 @@ namespace Sala7ly.DAL.Configurations
             builder.Property(p => p.ImageUrl).IsRequired();
             builder.Property(p => p.Caption).HasMaxLength(255);
             builder.Property(p => p.Type).HasMaxLength(20); // before, after, general
-            builder.Property(p => p.RequestId).IsRequired(false); // nullable
+            builder.Property(p => p.ServiceRequestId).IsRequired(false); // nullable
 
             // Technician relationship is configured from TechnicianProfile side.
             // RequestId → ServiceRequest: configure once that entity exists.

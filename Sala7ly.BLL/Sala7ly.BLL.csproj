@@ -8,10 +8,10 @@
 
   <ItemGroup>
     <Folder Include="Helper\" />
-    <Folder Include="Mapper\" />
-    <Folder Include="DTOs\" />
-    <Folder Include="Services\Abstraction\" />
-    <Folder Include="Services\Implementation\" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AutoMapper" Version="16.1.1" />
   </ItemGroup>
 
   <ItemGroup>

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Sala7ly.DAL.Entities;
 
+
 namespace Sala7ly.DAL.DataBase
 {
     public class AppDbContext : IdentityDbContext<User>

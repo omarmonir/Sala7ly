@@ -39,7 +39,7 @@ namespace Sala7ly.DAL.Repositories.Implementation
         public new void Delete(CustomerProfile profile)
         {
             profile.ToggaleStatus(profile.UserId);
-            profile.User.IsActive = false;
+            profile.User.Deactivate();
             _context.CustomerProfiles.Update(profile);
         }
 

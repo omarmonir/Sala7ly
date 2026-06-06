@@ -22,6 +22,8 @@ namespace Sala7ly.BLL.Common
             services.AddJwtAuthentication(configuration);
             services.AddScoped<IAuthService, AuthService>();
             services.AddScoped<IEmailService, EmailService>();
+            services.AddScoped<ICustomerService, CustomerService>();
+            services.AddScoped<IServiceCategoryService, ServiceCategoryService>();
             services.AddHttpContextAccessor();
             return services;
         }
@@ -57,9 +59,9 @@ namespace Sala7ly.BLL.Common
             services.AddIdentity<User, IdentityRole>(options =>
             {
                 options.Password.RequireDigit = true;
-                options.Password.RequireLowercase = false;
-                options.Password.RequireUppercase = false;
-                options.Password.RequireNonAlphanumeric = false;
+                options.Password.RequireLowercase = true;
+                options.Password.RequireUppercase = true;
+                options.Password.RequireNonAlphanumeric = true;
                 options.Password.RequiredLength = 8;
                 options.User.AllowedUserNameCharacters =
                     "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-._@+ ÇÃÅÂÈÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÝÞßáãäåæíìÁÄÆ";

@@ -20,7 +20,8 @@ namespace Sala7ly.DAL.Common
             AppContext.SetSwitch("Switch.System.Net.Mail.MailMessage.AllowUnicode", true);
            
             services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
-
+            services.AddScoped<IServiceCategoryRepository, ServiceCategoryRepository>();
+            services.AddScoped<ICustomerRepository, CustomerRepository>();
             return services;
         }
     }

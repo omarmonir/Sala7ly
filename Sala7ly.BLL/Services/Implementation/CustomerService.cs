@@ -76,6 +76,7 @@ namespace Sala7ly.BLL.Services.Implementation
                 await _userManager.DeleteAsync(user);
                 return false;
             }
+            await _userManager.AddToRoleAsync(user, "Customer");
 
             return true;
         }
@@ -111,7 +112,7 @@ namespace Sala7ly.BLL.Services.Implementation
             profile.ToggaleStatus(deletedBy);
 
             // 3 — deactivate user account
-            profile.User.IsActive = false;
+            profile.User.Deactivate();
             await _userManager.UpdateAsync(profile.User);
 
             // 4 — persist

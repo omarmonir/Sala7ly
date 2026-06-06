@@ -23,6 +23,10 @@ namespace Sala7ly.DAL.Entities
         public DateTime? DeactivationDate { get; private set; }
         public bool IsActive { get; private set; } = true;
 
+        public void SetImageUrl(string url)
+        {
+            ImageUrl = url;
+        }
 
         public void Activate()
         {

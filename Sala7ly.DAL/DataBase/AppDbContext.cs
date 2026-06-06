@@ -35,6 +35,8 @@ namespace Sala7ly.DAL.DataBase
         public DbSet<Ai_Interaction> AiInteractions { get; set; }
         public DbSet<EscrowTransaction> EscrowTransactions { get; set; }
         public DbSet<Dispute> Disputes { get; set; }
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Sala7ly.DAL.Entities;
 
+
 namespace Sala7ly.DAL.DataBase
 {
     public class AppDbContext : IdentityDbContext<User>
@@ -35,6 +36,8 @@ namespace Sala7ly.DAL.DataBase
         public DbSet<Ai_Interaction> AiInteractions { get; set; }
         public DbSet<EscrowTransaction> EscrowTransactions { get; set; }
         public DbSet<Dispute> Disputes { get; set; }
+        public DbSet<RefreshToken> RefreshTokens { get; set; }
+
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

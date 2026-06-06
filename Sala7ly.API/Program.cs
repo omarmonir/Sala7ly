@@ -1,40 +1,86 @@
-using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.OpenApi.Models;
 using Sala7ly.BLL.Common;
 using Sala7ly.DAL.Common;
-using Sala7ly.DAL.DataBase;
+using Sala7ly.DAL.Entities;
 
-namespace Sala7ly.API
+var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddControllers();
+builder.Services.AddEndpointsApiExplorer();
+
+builder.Services.AddSwaggerGen(c =>
 {
-    public class Program
+    c.AddSecurityDefinition("bearerAuthorization", new OpenApiSecurityScheme
     {
-        public static void Main(string[] args)
+        Type = SecuritySchemeType.Http,
+        Scheme = "bearer",
+        BearerFormat = "JWT",
+        In = ParameterLocation.Header,
+        Description = "Enter your JWT token"
+    });
+
+    c.AddSecurityRequirement(new OpenApiSecurityRequirement
+    {
         {
-            var builder = WebApplication.CreateBuilder(args);
-
-            // Add services to the container.
-            builder.Services.AddControllers();
-            builder.Services.AddOpenApi();
-
-          
-            builder.Services.AddDataAccessLayer(builder.Configuration);
-
-            //builder.Services.AddBusinessLogicLayer();
-
-            var app = builder.Build();
-
-            // Configure the HTTP request pipeline.
-            if (app.Environment.IsDevelopment())
+            new OpenApiSecurityScheme
             {
-                app.MapOpenApi();
-            }
-
-            app.UseHttpsRedirection();
-
-            app.UseAuthorization();
-
-            app.MapControllers();
-
-            app.Run();
+                Reference = new OpenApiReference
+                {
+                    Type = ReferenceType.SecurityScheme,
+                    Id = "bearerAuthorization"
+                }
+            },
+            Array.Empty<string>()
         }
+    });
+});
+
+builder.Services.AddDataAccessLayer(builder.Configuration);
+builder.Services.AddBusinessLogicLayer(builder.Configuration);
+
+var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var roleManager = scope.ServiceProvider
+        .GetRequiredService<RoleManager<IdentityRole>>();
+
+    foreach (var role in new[] { "Customer", "Technician", "Admin" })
+        if (!await roleManager.RoleExistsAsync(role))
+            await roleManager.CreateAsync(new IdentityRole(role));
+
+    var userManager = scope.ServiceProvider
+        .GetRequiredService<UserManager<User>>();
+
+    const string testEmail = "ma7311590@gmail.com";
+
+    if (await userManager.FindByEmailAsync(testEmail) == null)
+    {
+        var adminUser = new User
+        {
+            Name = "Admin",
+            UserName = "admin",
+            Email = testEmail,
+            EmailConfirmed = true,
+        };
+        adminUser.Activate(); 
+
+        var result = await userManager.CreateAsync(adminUser, "Omar@1234");
+        if (result.Succeeded)
+            await userManager.AddToRoleAsync(adminUser, "Admin");
     }
 }
+
+
+    app.UseSwagger();
+    app.UseSwaggerUI(c =>
+        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Sala7ly API v1"));
+
+
+app.UseHttpsRedirection();
+app.UseAuthentication();
+app.UseAuthorization();
+app.MapControllers();
+
+await app.RunAsync();

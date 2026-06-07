@@ -2,7 +2,7 @@
 using System.Threading.Tasks;
 using Sala7ly.DAL.Entities;
 
-namespace Sala7ly.DAL.Repositories.Interfaces
+namespace Sala7ly.DAL.Repositories.Abstraction
 {
     public interface ITechnicianPortfolioRepository
     {

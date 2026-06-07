@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Sala7ly.BLL.Dtos.TechnicianProfile;
 using Sala7ly.BLL.Services.Abstraction;
 using Sala7ly.DAL.Entities;
-using Sala7ly.DAL.Repositories.Interfaces;
+using Sala7ly.DAL.Repositories.Abstraction;
 
 namespace Sala7ly.BLL.Services.Implementation
 {

@@ -3,9 +3,9 @@ using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Sala7ly.DAL.DataBase;
 using Sala7ly.DAL.Entities;
-using Sala7ly.DAL.Repositories.Interfaces;
+using Sala7ly.DAL.Repositories.Abstraction;
 
-namespace Sala7ly.DAL.Repositories
+namespace Sala7ly.DAL.Repositories.Implementation
 {
     public class TechnicianProfileRepository : ITechnicianProfileRepository
     {

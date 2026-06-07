@@ -41,7 +41,7 @@ namespace Sala7ly.BLL.Services.Implementation
             var portfolio = new TechnicianPortfolio
             {
                 TechnicianId = dto.TechnicianId,
-                RequestId = dto.RequestId,
+                ServiceRequestId = dto.ServiceRequestId,
                 ImageUrl = dto.ImageUrl,
                 Caption = dto.Caption,
                 Type = dto.Type,
@@ -87,7 +87,7 @@ namespace Sala7ly.BLL.Services.Implementation
             {
                 Id = p.Id,
                 TechnicianId = p.TechnicianId,
-                RequestId = p.RequestId,
+                ServiceRequestId = p.ServiceRequestId,
                 ImageUrl = p.ImageUrl,
                 Caption = p.Caption,
                 Type = p.Type,

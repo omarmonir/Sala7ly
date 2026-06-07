@@ -46,6 +46,10 @@ namespace Sala7ly.DAL.DataBase.Configurations
                    .WithOne(t => t.User)
                    .HasForeignKey<TechnicianProfile>(t => t.UserId)
                    .OnDelete(DeleteBehavior.Restrict);
+            builder.HasMany(u => u.RefreshTokens)
+                   .WithOne(r => r.User)
+                   .HasForeignKey(r => r.UserId)
+                   .OnDelete(DeleteBehavior.Cascade);
 
             builder.Property(u => u.UserName)
                    .HasMaxLength(256);

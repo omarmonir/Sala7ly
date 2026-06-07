@@ -1,11 +1,19 @@
 ﻿using System;
 
-namespace Sala7ly.BLL.Dtos.TechnicianProfile
+namespace Sala7ly.BLL.DTOs.TechnicianDTOs
 {
-    public class TechnicianProfileResponseDto
+    public class TechnicianProfileDetailsDto
     {
         public int Id { get; set; }
         public string UserId { get; set; }
+
+        // from User
+        public string Name { get; set; }
+        public string Email { get; set; }
+        public string PhoneNumber { get; set; }
+        public string ImageUrl { get; set; }
+
+        // from TechnicianProfile
         public string Bio { get; set; }
         public int ExperienceYears { get; set; }
         public double OverallRating { get; set; }

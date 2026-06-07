@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using Microsoft.IdentityModel.Tokens;
 
 namespace Sala7ly.DAL.Entities
 {
@@ -28,16 +27,21 @@ namespace Sala7ly.DAL.Entities
             UpdatedBy = updatedBy;
             UpdatedOn = DateTime.Now;
         }
+
+
+
         public bool ToggaleStatus(string DeletedUser)
         {
-            if (!DeletedUser.IsNullOrEmpty())
+            if (!string.IsNullOrEmpty(DeletedUser))
             {
-                IsDeleted = !IsDeleted;
+                IsDeleted = !(IsDeleted ?? false); // treats null as false first
                 DeletedBy = DeletedUser;
                 DeletedOn = DateTime.Now;
                 return true;
             }
             return false;
         }
+
+
     }
 }

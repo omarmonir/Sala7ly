@@ -24,6 +24,23 @@ namespace Sala7ly.BLL.Common
             services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<ICustomerService, CustomerService>();
             services.AddScoped<IServiceCategoryService, ServiceCategoryService>();
+            services.AddScoped<ITechnicianService, TechnicianService>();
+            services.AddScoped<ITechnicianPortfolioService, TechnicianPortfolioService>();
+            services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAll", policy =>
+                {
+                    policy
+                        .WithOrigins(
+                            "http://localhost:5173",
+                            "http://localhost:4200",
+                            "https://sala7ly.runasp.net"
+                        )
+                        .AllowAnyMethod()
+                        .AllowAnyHeader()
+                        .AllowCredentials();
+                });
+            });
             services.AddHttpContextAccessor();
             return services;
         }

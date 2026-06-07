@@ -12,7 +12,7 @@ namespace Sala7ly.DAL.Entities
             
         }
         public string Name { get;  set; }
-        public string ImageUrl { get; private set; }
+        public string ImageUrl { get;  set; }
         public DateTime? LastLoginAt { get; private set; }
         public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; private set; } = DateTime.UtcNow;

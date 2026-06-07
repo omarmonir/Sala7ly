@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.OpenApi.Models;
 using Sala7ly.BLL.Common;
+using Sala7ly.BLL.Services.Abstraction;
+using Sala7ly.BLL.Services.Implementation;
 using Sala7ly.DAL.Common;
 using Sala7ly.DAL.Entities;
 
@@ -79,6 +81,7 @@ using (var scope = app.Services.CreateScope())
 
 
 app.UseHttpsRedirection();
+app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

@@ -1,21 +1,21 @@
 ﻿using Microsoft.AspNetCore.Mvc;
-using Sala7ly.BLL.Dtos.TechnicianProfile;
+using Sala7ly.BLL.DTOs.TechnicianDTOs;
 using Sala7ly.BLL.Services.Abstraction;
 
 namespace Sala7ly.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class TechnicianProfilesController : ControllerBase
+    public class TechniciansController : ControllerBase
     {
-        private readonly ITechnicianProfileService _service;
+        private readonly ITechnicianService _service;
 
-        public TechnicianProfilesController(ITechnicianProfileService service)
+        public TechniciansController(ITechnicianService service)
         {
             _service = service;
         }
 
-        // GET: api/technicianprofiles
+        // GET: api/technicians
         [HttpGet]
         public async Task<IActionResult> GetAll()
         {
@@ -23,41 +23,47 @@ namespace Sala7ly.API.Controllers
             return Ok(technicians);
         }
 
-        // GET: api/technicianprofiles/5
+        // GET: api/technicians/5
         [HttpGet("{id}")]
         public async Task<IActionResult> GetById(int id)
         {
             var technician = await _service.GetByIdAsync(id);
-            if (technician == null)
+            if (technician is null)
                 return NotFound();
 
             return Ok(technician);
         }
 
-        // POST: api/technicianprofiles
+        // POST: api/technicians
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] CreateTechnicianProfileDto dto)
+        public async Task<IActionResult> Add([FromBody] TechnicianRegisterDto dto)
         {
-            var created = await _service.CreateAsync(dto);
-            return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
+            var created = await _service.AddAsync(dto);
+            if (!created)
+                return BadRequest("Could not create technician. The email may already be in use.");
+
+            return Ok();
         }
 
-        // PUT: api/technicianprofiles
-        [HttpPut]
-        public async Task<IActionResult> Update([FromBody] UpdateTechnicianProfileDto dto)
+        // PUT: api/technicians/5
+        [HttpPut("{id}")]
+        public async Task<IActionResult> Update(int id, [FromBody] TechnicianProfileUpdateDto dto)
         {
-            var updated = await _service.UpdateAsync(dto);
-            if (updated == null)
+            var updated = await _service.UpdateAsync(id, dto);
+            if (!updated)
                 return NotFound();
 
-            return Ok(updated);
+            return NoContent();
         }
 
-        // DELETE: api/technicianprofiles/5
+        // DELETE: api/technicians/5
         [HttpDelete("{id}")]
         public async Task<IActionResult> Delete(int id)
         {
-            var deleted = await _service.DeleteAsync(id);
+            // deletedBy — ideally the current admin's id; placeholder for now
+            var deletedBy = User?.Identity?.Name ?? "system";
+
+            var deleted = await _service.DeleteAsync(id, deletedBy);
             if (!deleted)
                 return NotFound();
 

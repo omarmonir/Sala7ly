@@ -36,11 +36,11 @@ namespace Sala7ly.BLL.Mapper
         // ── DTO → Entity 
         public static User ToUserEntity(CustomerRegisterDto dto) => new User
         {
-        Name = dto.Name,
-        Email = dto.Email,
-        UserName = dto.Email,
-        NormalizedEmail = dto.Email.ToUpper(),   // add
-        NormalizedUserName = dto.Email.ToUpper()    // add
+            Name = dto.Name,
+            Email = dto.Email,
+            UserName = dto.Email,
+            NormalizedEmail = dto.Email.ToUpper(),   // add
+            NormalizedUserName = dto.Email.ToUpper()    // add
         };
 
         public static CustomerProfile ToProfileEntity() => new CustomerProfile
@@ -54,7 +54,7 @@ namespace Sala7ly.BLL.Mapper
         {
             user.Name = dto.Name;
             user.PhoneNumber = dto.PhoneNumber;
-            user.ImageUrl = dto.ImageUrl;
+            user.SetImageUrl(dto.ImageUrl);
         }
 
 

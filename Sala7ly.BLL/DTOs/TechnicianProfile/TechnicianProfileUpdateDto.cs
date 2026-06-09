@@ -10,6 +10,6 @@
         // technician profile fields that can change
         public string Bio { get; set; }
         public int ExperienceYears { get; set; }
-        public string AvgResponseTime { get; set; }
+        public int AvgResponseTime { get; set; }
     }
 }

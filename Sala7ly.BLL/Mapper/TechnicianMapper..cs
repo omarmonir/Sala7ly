@@ -12,7 +12,7 @@ namespace Sala7ly.BLL.Mapper
             {
                 Name = dto.Name,
                 Email = dto.Email,
-                UserName = dto.Email,   // Identity uses UserName for login
+                UserName = dto.Email,   
                 PhoneNumber = dto.PhoneNumber,
                 ImageUrl = dto.ImageUrl
             };
@@ -23,9 +23,9 @@ namespace Sala7ly.BLL.Mapper
         {
             return new TechnicianProfile
             {
-                Bio = dto.Bio,
+                
                 ExperienceYears = dto.ExperienceYears,
-                AvgResponseTime = dto.AvgResponseTime
+                
             };
         }
 

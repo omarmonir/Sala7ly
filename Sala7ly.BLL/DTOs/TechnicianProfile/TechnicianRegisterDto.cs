@@ -10,8 +10,8 @@
         public string ImageUrl { get; set; }
 
         // technician profile fields
-        public string Bio { get; set; }
+        
         public int ExperienceYears { get; set; }
-        public string AvgResponseTime { get; set; }
+        
     }
 }

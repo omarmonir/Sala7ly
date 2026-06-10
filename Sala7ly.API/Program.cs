@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.OpenApi.Models;
+using Sala7ly.API.Models;
 using Sala7ly.BLL.Common;
 using Sala7ly.BLL.Services.Abstraction;
 using Sala7ly.BLL.Services.Implementation;
@@ -40,7 +41,7 @@ builder.Services.AddSwaggerGen(c =>
 
 builder.Services.AddDataAccessLayer(builder.Configuration);
 builder.Services.AddBusinessLogicLayer(builder.Configuration);
-
+builder.Services.AddScoped<IFilePathProvider, WebHostEnvironmentPathProvider>();
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())

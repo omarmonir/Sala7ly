@@ -71,7 +71,32 @@ namespace Sala7ly.BLL.Services.Implementation
 
             return "تم إرسال رمز التحقق إلى بريدك الإلكتروني";
         }
+        public async Task<bool> RegisterAdminAsync(AdminRegisterDto dto)
+        {
+           
+            var existingUser = await _userManager.FindByEmailAsync(dto.Email);
+            if (existingUser is not null)
+                throw new InvalidOperationException("البريد الإلكتروني مستخدم بالفعل");
 
+            var user = new User
+            {
+                Name = dto.Name,
+                UserName = dto.Email,
+                Email = dto.Email,
+                EmailConfirmed = true,
+            };
+
+            var result = await _userManager.CreateAsync(user, dto.Password);
+            if (!result.Succeeded)
+                throw new Exception(string.Join(", ", result.Errors.Select(e => e.Description)));
+
+            // ensure role exists
+            if (!await _roleManager.RoleExistsAsync("Admin"))
+                await _roleManager.CreateAsync(new IdentityRole("Admin"));
+
+            await _userManager.AddToRoleAsync(user, "Admin");
+            return true;
+        }
         public async Task<ResponseLoginDto> LoginAsync(RequestLoginDto request)
         {
             var user = await _userManager.FindByEmailAsync(request.Email) ??

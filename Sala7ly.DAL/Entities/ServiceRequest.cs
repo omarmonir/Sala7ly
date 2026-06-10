@@ -5,24 +5,40 @@ namespace Sala7ly.DAL.Entities
     public class ServiceRequest : BaseEntity
     {
         public ServiceRequest() { }
-        
+
+        public ServiceRequest(string title, string description, List<string> imageUrls, Urgency urgency, BookingMode bookingMode, 
+                              bool isEmergency, DateTime scheduledAt, int customerId, int addressId, int categoryId)
+        {
+            Title = title;
+            Description = description;
+            ImageUrls = imageUrls;
+            Urgency = urgency;
+            BookingMode = bookingMode;
+            IsEmergency = isEmergency;
+            ScheduledAt = scheduledAt;
+            CustomerId = customerId;
+            AddressId = addressId;
+            CategoryId = categoryId;
+            Status = Status.open;
+        }
+
         public string Title { get; private set; }
         public string Description { get; private set; }
-        public List<string> ImageUrls { get; private set; }  // for photos of the issue
+        public List<string> ImageUrls { get; private set; }
         public Urgency Urgency { get; private set; }
         public Status Status { get; private set; }
         public BookingMode BookingMode { get; private set; }
-        public decimal AiPriceMin { get; private set; }  // AI estimated price range
+        public decimal AiPriceMin { get; private set; }
         public decimal AiPriceMax { get; private set; }
         public bool IsEmergency { get; private set; } = false;
-        public decimal SurgeMultiplier { get; private set; } = 1.0m;  // for dynamic pricing during high demand
-        public DateTime ScheduledAt { get; private set; }  // when customer wants the service
-        public DateTime? CompletedAt { get; private set; }  // when service was completed
-        public DateTime? StartedAt { get; private set; }  // when technician started the job
+        public decimal SurgeMultiplier { get; private set; } = 1.0m;
+        public DateTime ScheduledAt { get; private set; }
+        public DateTime? CompletedAt { get; private set; }
+        public DateTime? StartedAt { get; private set; }
         public int CustomerId { get; private set; }
         public int AddressId { get; private set; }
         public int CategoryId { get; private set; }
-        public int? SelectedBidId { get; private set; }  // nullable until customer selects a bid
+        public int? SelectedBidId { get; private set; }
 
         // navigation
         public CustomerProfile Profile { get; private set; }
@@ -35,8 +51,11 @@ namespace Sala7ly.DAL.Entities
         public ICollection<Ai_Interaction> AiInteractions { get; private set; }
         public ICollection<TechnicianPortfolio> TechnicianPortfolios { get; private set; }
         public Review Review { get; private set; }
+
+        public void MarkCompleted()
+        {
+            Status = Status.completed;
+            CompletedAt = DateTime.Now;
+        }
     }
-
-
-
 }

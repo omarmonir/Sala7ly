@@ -27,6 +27,7 @@ namespace Sala7ly.BLL.Common
             services.AddScoped<ITechnicianService, TechnicianService>();
             services.AddScoped<ITechnicianPortfolioService, TechnicianPortfolioService>();
             services.AddScoped<IFileService, FileService>();
+            services.AddScoped<IServiceRequestService, ServiceRequestService>();
             services.AddCors(options =>
             {
                 options.AddPolicy("AllowAll", policy =>

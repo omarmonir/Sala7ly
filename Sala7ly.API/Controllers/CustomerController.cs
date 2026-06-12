@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Sala7ly.BLL.DTOs.CustomerDTOs;
 using Sala7ly.BLL.Services.Abstraction;
+using System.Security.Claims;
 
 namespace Sala7ly.API.Controllers
 {
@@ -83,6 +84,27 @@ namespace Sala7ly.API.Controllers
 
             return Ok(new { message = "تم حذف الحساب بنجاح" });
         }
+
+
+
+        // ── GET api/customer/me ───────────────────────────────
+        [HttpGet("me")]
+        [Authorize(Roles = "Customer")]
+        public async Task<IActionResult> GetMine()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized();
+
+            var result = await _customerService.GetMineAsync(userId);
+
+            if (result is null)
+                return NotFound();
+
+            return Ok(result);
+        }
+
 
 
     }

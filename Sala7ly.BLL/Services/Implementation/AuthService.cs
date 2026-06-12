@@ -246,15 +246,17 @@ namespace Sala7ly.BLL.Services.Implementation
         {
             var userRoles = await _userManager.GetRolesAsync(user);
             var authClaims = new List<Claim>
-            {
-                new Claim(ClaimTypes.Name, user.UserName),
-                new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
-            };
-             
+    {
+        new Claim(ClaimTypes.NameIdentifier, user.Id),  
+        new Claim(ClaimTypes.Name, user.UserName),
+        new Claim(JwtRegisteredClaimNames.Jti, Guid.NewGuid().ToString()),
+    };
+
             foreach (var userRole in userRoles)
             {
                 authClaims.Add(new Claim(ClaimTypes.Role, userRole));
             }
+
             var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
             var token = new JwtSecurityToken(
                 issuer: _configuration["Jwt:ValidIssuer"],
@@ -266,6 +268,9 @@ namespace Sala7ly.BLL.Services.Implementation
                 );
             return token;
         }
+
+
+
         private static string GenerateRefreshTokenString()
         {
             var randomNumber = new byte[64];

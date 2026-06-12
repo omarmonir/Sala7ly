@@ -6,5 +6,7 @@ namespace Sala7ly.DAL.Repositories.Abstraction
     {
         Task<IEnumerable<ServiceRequest>> GetByCustomerIdAsync(int customerId);
         Task<IEnumerable<ServiceRequest>> GetOpenRequestsAsync();
+        Task<ServiceRequest?> GetByIdWithPartiesAsync(int requestId);
+
     }
 }

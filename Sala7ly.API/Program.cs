@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.OpenApi.Models;
+using Sala7ly.API.Hubs;
 using Sala7ly.API.Models;
 using Sala7ly.BLL.Common;
 using Sala7ly.BLL.Services.Abstraction;
@@ -10,6 +11,7 @@ using Sala7ly.DAL.Entities;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
+builder.Services.AddSignalR();
 builder.Services.AddEndpointsApiExplorer();
 
 builder.Services.AddSwaggerGen(c =>
@@ -75,10 +77,10 @@ using (var scope = app.Services.CreateScope())
     }
 }
 
-
+app.UseStaticFiles();
     app.UseSwagger();
     app.UseSwaggerUI(c =>
-        c.SwaggerEndpoint("/swagger/v1/swagger.json", "Sala7ly API v1"));
+    c.SwaggerEndpoint("/swagger/v1/swagger.json", "Sala7ly API v1"));
 
 
 app.UseHttpsRedirection();
@@ -86,5 +88,5 @@ app.UseCors("AllowAll");
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
-
+app.MapHub<ChatHub>("/chathub");
 await app.RunAsync();

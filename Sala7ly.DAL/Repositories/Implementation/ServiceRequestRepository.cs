@@ -33,5 +33,11 @@ namespace Sala7ly.DAL.Repositories.Implementation
                 .Where(r => r.Status == Status.open && r.IsDeleted != true)
                 .OrderByDescending(r => r.CreatedOn)
                 .ToListAsync();
+
+        public async Task<ServiceRequest?> GetByIdWithPartiesAsync(int requestId)
+            => await _context.ServiceRequests
+                .Include(r => r.Profile)        
+                .Include(r => r.SelectedBid)    
+                .FirstOrDefaultAsync(r => r.Id == requestId);
     }
 }

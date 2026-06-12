@@ -12,7 +12,7 @@ namespace Sala7ly.DAL.DataBase.Configurations
             builder.HasKey(t => t.Id);
 
             builder.Property(t => t.UserId).IsRequired();
-            builder.Property(t => t.AvgResponseTime).HasMaxLength(50);
+            builder.Property(t => t.AvgResponseTime).HasMaxLength(12);
             builder.Property(t => t.IsApproved).HasDefaultValue(false);
             builder.Property(t => t.IsFeatured).HasDefaultValue(false);
 

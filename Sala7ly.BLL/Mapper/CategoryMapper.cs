@@ -6,7 +6,7 @@ using System.Text;
 
 namespace Sala7ly.BLL.Mapper
 {
-
+    
     public static class CategoryMapper
     {
         // ── Entity → DTO

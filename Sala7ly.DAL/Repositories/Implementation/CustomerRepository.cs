@@ -43,6 +43,13 @@ namespace Sala7ly.DAL.Repositories.Implementation
             _context.CustomerProfiles.Update(profile);
         }
 
+        public Task<CustomerProfile?> GetByUserIdAsync(string userId)
+            => _context.CustomerProfiles
+                .Include(cp => cp.User)
+                .Include(cp => cp.Addresses)
+                .Include(cp => cp.ServiceRequests)
+                .Include(cp => cp.FavoriteTechnicians)
+                .FirstOrDefaultAsync(cp => cp.UserId == userId && cp.IsDeleted != true);
 
 
     }

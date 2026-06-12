@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Sala7ly.BLL.DTOs.CustomerDTOs;
 using Sala7ly.BLL.Services.Abstraction;
@@ -21,76 +22,67 @@ namespace Sala7ly.API.Controllers
 
         // ── GET api/customer
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetAll()
         {
-            var customers = await _customerService.GetAllAsync();
-            return Ok(customers);
+            var result = await _customerService.GetAllAsync();
+            return Ok(result);
         }
 
 
 
         // ── GET api/customer/{id} 
-        [HttpGet("{id}")]
+        [HttpGet("{id:int}")]
+        [Authorize]
         public async Task<IActionResult> GetById(int id)
         {
-            var customer = await _customerService.GetByIdAsync(id);
-
-            if (customer is null)
-                return NotFound(new { Message = "Customer not found" });
-
-            return Ok(customer);
+            var result = await _customerService.GetByIdAsync(id);
+            if (result is null) return NotFound();
+            return Ok(result);
         }
 
         // ── POST api/customer 
 
-        [HttpPost]
-        public async Task<IActionResult> Add([FromBody] CustomerRegisterDto dto)
+        [HttpPost("register")]
+        [AllowAnonymous]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> Register([FromForm] CustomerRegisterDto dto)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var result = await _customerService.AddAsync(dto);
+            var success = await _customerService.AddAsync(dto);
+            if (!success) return Conflict(new { message = "البريد الإلكتروني مستخدم بالفعل" });
 
-            if (!result)
-                return BadRequest(new { Message = "Registration failed" });
-
-            return StatusCode(201, new { Message = "Customer created successfully" });
+            return StatusCode(201, new { message = "تم إنشاء الحساب بنجاح" });
         }
 
 
 
         // ── PUT api/customer/{id} 
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id,
-                                                [FromBody] CustomerProfileUpdateDto dto)
+        [HttpPut("{id:int}")]
+        [Authorize(Roles = "Customer,Admin")]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> Update(int id, [FromForm] CustomerProfileUpdateDto dto)
         {
-            if (!ModelState.IsValid)
-                return BadRequest(ModelState);
+            if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            var result = await _customerService.UpdateAsync(id, dto);
+            var success = await _customerService.UpdateAsync(id, dto);
+            if (!success) return NotFound();
 
-            if (!result)
-                return NotFound(new { Message = "Customer not found" });
-
-            return Ok(new { Message = "Customer updated successfully" });
+            return Ok(new { message = "تم تحديث البيانات بنجاح" });
         }
-
 
         // ── DELETE api/customer/{id} 
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> Delete(int id, [FromQuery] string deletedBy)
+        [HttpDelete("{id:int}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Delete(int id)
         {
-            if (string.IsNullOrWhiteSpace(deletedBy))
-                return BadRequest(new { Message = "deletedBy is required" });
+            var deletedBy = User.Identity?.Name ?? "system";
+            var success = await _customerService.DeleteAsync(id, deletedBy);
+            if (!success) return NotFound();
 
-            var result = await _customerService.DeleteAsync(id, deletedBy);
-
-            if (!result)
-                return NotFound(new { Message = "Customer not found" });
-
-            return Ok(new { Message = "Customer deleted successfully" });
+            return Ok(new { message = "تم حذف الحساب بنجاح" });
         }
-
 
 
     }

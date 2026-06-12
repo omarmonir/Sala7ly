@@ -15,12 +15,15 @@ namespace Sala7ly.BLL.Services.Implementation
     {
         private readonly ITechnicianProfileRepository _technicianRepo;
         private readonly UserManager<User> _userManager;
+        private readonly IFileService _fileService;
 
         public TechnicianService(ITechnicianProfileRepository technicianRepo,
-                                 UserManager<User> userManager)
+                                UserManager<User> userManager,
+                                IFileService fileService)
         {
             _technicianRepo = technicianRepo;
             _userManager = userManager;
+            _fileService = fileService;
         }
 
         // Queries
@@ -46,38 +49,46 @@ namespace Sala7ly.BLL.Services.Implementation
 
         public async Task<bool> AddAsync(TechnicianRegisterDto dto)
         {
-            // 1 — check email not already taken
             var existingUser = await _userManager.FindByEmailAsync(dto.Email);
-            if (existingUser is not null)
-                return false;
+            if (existingUser is not null) return false;
 
-            // 2 — map dto → entities
+            // upload image if provided
+            string? imageUrl = null;
+            if (dto.Image is not null)
+                imageUrl = await _fileService.SaveFileAsync(dto.Image, "technicians");
+
             var user = TechnicianMapper.ToUserEntity(dto);
+            if (imageUrl is not null)
+                user.SetImageUrl(imageUrl);
+
             var profile = TechnicianMapper.ToProfileEntity(dto);
 
-            // 3 — create user via Identity
             var result = await _userManager.CreateAsync(user, dto.Password);
             if (!result.Succeeded)
+            {
+                if (imageUrl is not null)
+                    await _fileService.DeleteFileAsync(imageUrl);
                 return false;
+            }
 
-            // 4 — link profile and save
             profile.UserId = user.Id;
             profile.MarkCreated(user.Id);
 
             await _technicianRepo.AddAsync(profile);
             var saved = await _technicianRepo.SaveChangesAsync();
 
-            // 5 — rollback user if profile save failed
             if (saved == 0)
             {
                 await _userManager.DeleteAsync(user);
+                if (imageUrl is not null)
+                    await _fileService.DeleteFileAsync(imageUrl);
                 return false;
             }
 
             await _userManager.AddToRoleAsync(user, "Technician");
-
             return true;
         }
+
 
         public async Task<bool> UpdateAsync(int id, TechnicianProfileUpdateDto dto)
         {

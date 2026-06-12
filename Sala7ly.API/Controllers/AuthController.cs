@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Sala7ly.BLL.DTOs.Auth;
 using Sala7ly.BLL.Services.Abstraction;
+using Sala7ly.BLL.Services.Implementation;
 
 
 namespace Sala7ly.API.Controllers
@@ -12,10 +13,10 @@ namespace Sala7ly.API.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _auth;
-
+        
         public AuthController(IAuthService auth) => _auth = auth;
 
-       
+   
         /// <summary>Login with email/username and password</summary>
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] RequestLoginDto dto)
@@ -180,6 +181,29 @@ namespace Sala7ly.API.Controllers
             catch (Exception ex)
             {
                 return StatusCode(500, new { error = "حدث خطأ غير متوقع", details = ex.Message });
+            }
+        }
+        [HttpPost("register-admin")]
+        [AllowAnonymous] 
+        public async Task<IActionResult> RegisterAdmin([FromBody] AdminRegisterDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
+            try
+            {
+                await _auth.RegisterAdminAsync(dto);
+                return StatusCode(201, new { message = "تم إنشاء حساب الأدمن بنجاح" });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(new { message = ex.Message });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return Conflict(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new { message = ex.Message });
             }
         }
     }

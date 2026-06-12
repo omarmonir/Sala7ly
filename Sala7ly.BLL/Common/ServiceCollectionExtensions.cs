@@ -1,5 +1,3 @@
-using System.Security.Claims;
-using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
@@ -10,6 +8,10 @@ using Sala7ly.BLL.Services.Abstraction;
 using Sala7ly.BLL.Services.Implementation;
 using Sala7ly.DAL.DataBase;
 using Sala7ly.DAL.Entities;
+using Sala7ly.DAL.Repositories.Abstraction;
+using Sala7ly.DAL.Repositories.Implementation;
+using System.Security.Claims;
+using System.Text;
 
 namespace Sala7ly.BLL.Common
 {
@@ -26,6 +28,29 @@ namespace Sala7ly.BLL.Common
             services.AddScoped<IServiceCategoryService, ServiceCategoryService>();
             services.AddScoped<ITechnicianService, TechnicianService>();
             services.AddScoped<ITechnicianPortfolioService, TechnicianPortfolioService>();
+
+            services.AddScoped<IAddressService, AddressService>();
+
+
+            services.AddScoped<IFileService, FileService>();
+            services.AddScoped<IServiceRequestService, ServiceRequestService>();
+            services.AddScoped<IChatService, ChatService>();    
+
+            services.AddCors(options =>
+            {
+                options.AddPolicy("AllowAll", policy =>
+                {
+                    policy
+                        .WithOrigins(
+                            "http://localhost:5173",
+                            "http://localhost:4200",
+                            "https://sala7ly.runasp.net"
+                        )
+                        .AllowAnyMethod()
+                        .AllowAnyHeader()
+                        .AllowCredentials();
+                });
+            });
             services.AddHttpContextAccessor();
             return services;
         }
@@ -91,6 +116,9 @@ namespace Sala7ly.BLL.Common
                 };
             });
             return services;
+
         }
+
     }
+
 }

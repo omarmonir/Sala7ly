@@ -37,6 +37,39 @@ namespace Sala7ly.DAL.Entities
         public User Sender { get; private set; }
 
 
+        public static ChatMessage CreateText(int requestId, string senderId, string content)
+        => new()
+        {
+            RequestId = requestId,
+            SenderId = senderId,
+            Content = content,
+            MessageType = ChatMessageType.text,
+            SentAt = DateTime.UtcNow,
+            IsRead = false
+        };
+
+        public static ChatMessage CreateWithAttachments(
+        int requestId, string senderId,
+        string[]? attachmentUrls,
+        ChatMessageType type,
+        int? durationSeconds = null)
+        => new()
+        {
+            RequestId = requestId,
+            SenderId = senderId,
+            AttachmentUrls = attachmentUrls,
+            MessageType = type,
+            DurationSeconds = durationSeconds,
+            SentAt = DateTime.UtcNow,
+            IsRead = false
+        };
+
+        public void MarkAsRead()
+        {
+            IsRead = true;
+            ReadAt = DateTime.UtcNow;
+        }
+
     }
 
 }

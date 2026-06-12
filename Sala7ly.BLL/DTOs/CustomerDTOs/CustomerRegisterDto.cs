@@ -1,4 +1,5 @@
 ﻿using System.ComponentModel.DataAnnotations;
+using Microsoft.AspNetCore.Http;
 
 namespace Sala7ly.BLL.DTOs.CustomerDTOs
 {
@@ -16,5 +17,8 @@ namespace Sala7ly.BLL.DTOs.CustomerDTOs
         [RegularExpression(@"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_]).+$",
         ErrorMessage = "يجب أن تحتوي على حرف كبير وصغير ورقم ورمز خاص")]
         public string Password { get; set; }
+
+        public string PhoneNumber { get; set; }
+        public IFormFile? Image { get; set; }
     }
 }

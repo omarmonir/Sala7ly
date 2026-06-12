@@ -18,17 +18,17 @@ namespace Sala7ly.DAL.Repositories.Implementation
 
         public async Task<List<TechnicianProfile>> GetAllAsync()
         {
-            return await _context.TechnicianProfiles.ToListAsync();
+            return await _context.TechnicianProfiles.Include(u =>u.User).ToListAsync();
         }
 
         public async Task<TechnicianProfile> GetByIdAsync(int id)
         {
-            return await _context.TechnicianProfiles.FindAsync(id);
+            return await _context.TechnicianProfiles.Include(u => u.User).FirstOrDefaultAsync(t => t.Id == id);
         }
 
         public async Task<TechnicianProfile> GetByUserIdAsync(string userId)
         {
-            return await _context.TechnicianProfiles
+            return await _context.TechnicianProfiles.Include(u => u.User)
                 .FirstOrDefaultAsync(t => t.UserId == userId);
         }
 

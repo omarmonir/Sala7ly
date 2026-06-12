@@ -11,7 +11,7 @@ namespace Sala7ly.DAL.Entities
         }
         public  string UserId { get;  set; }            
 
-        public string Bio { get;set; }
+        public string Bio { get;set; } = string.Empty;
         public int ExperienceYears { get; set; }
         public double OverallRating { get; set; }      
         public int TotalReviews { get;  set; }
@@ -25,7 +25,7 @@ namespace Sala7ly.DAL.Entities
         public SubscriptionTier SubscriptionTier { get;  set; } = SubscriptionTier.Free;
         public DateTime? SubscriptionExpiresAt { get;  set; }
 
-        public float[] EmbeddingVector { get; set; }  // AI semantic matching
+        public float[] EmbeddingVector { get; set; } = new float [1];
         public DateTime? ApprovedAt { get;  set; }
 
 

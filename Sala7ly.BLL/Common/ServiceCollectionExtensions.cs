@@ -28,14 +28,14 @@ namespace Sala7ly.BLL.Common
             services.AddScoped<IServiceCategoryService, ServiceCategoryService>();
             services.AddScoped<ITechnicianService, TechnicianService>();
             services.AddScoped<ITechnicianPortfolioService, TechnicianPortfolioService>();
-<<<<<<< HEAD
+
             services.AddScoped<IAddressService, AddressService>();
 
-=======
+
             services.AddScoped<IFileService, FileService>();
             services.AddScoped<IServiceRequestService, ServiceRequestService>();
             services.AddScoped<IChatService, ChatService>();    
->>>>>>> origin/master
+
             services.AddCors(options =>
             {
                 options.AddPolicy("AllowAll", policy =>

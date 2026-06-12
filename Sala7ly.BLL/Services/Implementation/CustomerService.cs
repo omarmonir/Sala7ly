@@ -1,12 +1,15 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Sala7ly.BLL.DTOs.CustomerDTOs;
+using Sala7ly.BLL.DTOs.ServiceRequestDTOs;
 using Sala7ly.BLL.Mapper;
 using Sala7ly.BLL.Services.Abstraction;
 using Sala7ly.DAL.Entities;
 using Sala7ly.DAL.Repositories.Abstraction;
+using Sala7ly.DAL.Repositories.Implementation;
 using System;
 using System.Collections.Generic;
 using System.Text;
+using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Sala7ly.BLL.Services.Implementation
 {
@@ -44,6 +47,20 @@ namespace Sala7ly.BLL.Services.Implementation
 
             return profiles.Select(CustomerMapper.ToListItemDto);
         }
+
+
+
+        public async Task<CustomerProfileDetailsDto?> GetMineAsync(string userId)
+        {
+            var profile = await _customerRepo.GetByUserIdAsync(userId);
+
+            if (profile is null)
+                return null;
+
+            return CustomerMapper.ToDetailsDto(profile);
+        }
+
+
 
         // ── Commands
 

@@ -9,6 +9,7 @@
       "applicationUrl": "http://localhost:5296"
     },
     "https": {
+<<<<<<< HEAD
       "commandName": "Project",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
@@ -22,6 +23,16 @@
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "Development"
       }
+=======
+        "commandName": "Project",
+        "dotnetRunMessages": true,
+        "launchBrowser": false,
+        "launchUrl": "swagger",
+        "applicationUrl": "https://localhost:7124;http://localhost:5296",
+        "environmentVariables": {
+            "ASPNETCORE_ENVIRONMENT": "Development"
+        }
+>>>>>>> origin/master
     }
   },
   "$schema": "https://json.schemastore.org/launchsettings.json",

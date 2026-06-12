@@ -7,7 +7,7 @@ namespace Sala7ly.DAL.Repositories.Abstraction
 {
     public interface ICustomerRepository : IGenericRepository<CustomerProfile>
     {
-
+        Task<CustomerProfile?> GetByUserIdAsync(string userId);
 
     }
 

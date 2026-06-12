@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Sala7ly.BLL.DTOs.TechnicianDTOs;
 using Sala7ly.BLL.Services.Abstraction;
 
@@ -6,68 +7,72 @@ namespace Sala7ly.API.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class TechniciansController : ControllerBase
+    public class TechnicianController : ControllerBase
     {
-        private readonly ITechnicianService _service;
+        private readonly ITechnicianService _technicianService;
 
-        public TechniciansController(ITechnicianService service)
+        public TechnicianController(ITechnicianService technicianService)
         {
-            _service = service;
+            _technicianService = technicianService;
         }
 
-        // GET: api/technicians
+        // GET api/technician
         [HttpGet]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> GetAll()
         {
-            var technicians = await _service.GetAllAsync();
-            return Ok(technicians);
+            var result = await _technicianService.GetAllAsync();
+            return Ok(result);
         }
 
-        // GET: api/technicians/5
-        [HttpGet("{id}")]
+        // GET api/technician/5
+        [HttpGet("{id:int}")]
+        [Authorize]
         public async Task<IActionResult> GetById(int id)
         {
-            var technician = await _service.GetByIdAsync(id);
-            if (technician is null)
-                return NotFound();
-
-            return Ok(technician);
+            var result = await _technicianService.GetByIdAsync(id);
+            if (result is null) return NotFound();
+            return Ok(result);
         }
 
-        // POST: api/technicians
-        [HttpPost]
-        public async Task<IActionResult> Add([FromBody] TechnicianRegisterDto dto)
+        // POST api/technician/register
+        [HttpPost("register")]
+        [AllowAnonymous]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> Register([FromForm] TechnicianRegisterDto dto)
         {
-            var created = await _service.AddAsync(dto);
-            if (!created)
-                return BadRequest("Could not create technician. The email may already be in use.");
+            if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            return Ok();
+            var success = await _technicianService.AddAsync(dto);
+            if (!success) return Conflict(new { message = "البريد الإلكتروني مستخدم بالفعل" });
+
+            return StatusCode(201, new { message = "تم إنشاء حساب الفني بنجاح، في انتظار الموافقة" });
         }
 
-        // PUT: api/technicians/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> Update(int id, [FromBody] TechnicianProfileUpdateDto dto)
+        // PUT api/technician/5
+        [HttpPut("{id:int}")]
+        [Authorize(Roles = "Technician,Admin")]
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> Update(int id, [FromForm] TechnicianProfileUpdateDto dto)
         {
-            var updated = await _service.UpdateAsync(id, dto);
-            if (!updated)
-                return NotFound();
+            if (!ModelState.IsValid) return BadRequest(ModelState);
 
-            return NoContent();
+            var success = await _technicianService.UpdateAsync(id, dto);
+            if (!success) return NotFound();
+
+            return Ok(new { message = "تم تحديث بيانات الفني بنجاح" });
         }
 
-        // DELETE: api/technicians/5
-        [HttpDelete("{id}")]
+        // DELETE api/technician/5
+        [HttpDelete("{id:int}")]
+        [Authorize(Roles = "Admin")]
         public async Task<IActionResult> Delete(int id)
         {
-            // deletedBy — ideally the current admin's id; placeholder for now
-            var deletedBy = User?.Identity?.Name ?? "system";
+            var deletedBy = User.Identity?.Name ?? "system";
+            var success = await _technicianService.DeleteAsync(id, deletedBy);
+            if (!success) return NotFound();
 
-            var deleted = await _service.DeleteAsync(id, deletedBy);
-            if (!deleted)
-                return NotFound();
-
-            return NoContent();
+            return Ok(new { message = "تم حذف حساب الفني بنجاح" });
         }
     }
 }

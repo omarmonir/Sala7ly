@@ -15,12 +15,15 @@ namespace Sala7ly.BLL.Services.Implementation
 
         private readonly ICustomerRepository _customerRepo;
         private readonly UserManager<User> _userManager;
+        private readonly IFileService _fileService;
 
         public CustomerService(ICustomerRepository customerRepo,
-                               UserManager<User> userManager)
+                              UserManager<User> userManager,
+                              IFileService fileService)
         {
             _customerRepo = customerRepo;
             _userManager = userManager;
+            _fileService = fileService;
         }
 
         // Queries 
@@ -51,15 +54,26 @@ namespace Sala7ly.BLL.Services.Implementation
             if (existingUser is not null)
                 return false;
 
+            string? imageUrl = null;
+            if (dto.Image is not null)
+                imageUrl = await _fileService.SaveFileAsync(dto.Image, "customers");
+
+
             // 2 — map dto → entities
             var user = CustomerMapper.ToUserEntity(dto);
+            if (imageUrl is not null)
+                user.SetImageUrl(imageUrl);
             var profile = CustomerMapper.ToProfileEntity();
 
 
             // 3 — create user via Identity
             var result = await _userManager.CreateAsync(user, dto.Password);
             if (!result.Succeeded)
-                return false; // back to this
+            {
+                if (imageUrl is not null)
+                    await _fileService.DeleteFileAsync(imageUrl);
+                return false;
+            }
 
 
 
@@ -74,6 +88,8 @@ namespace Sala7ly.BLL.Services.Implementation
             if (saved == 0)
             {
                 await _userManager.DeleteAsync(user);
+                if (imageUrl is not null)
+                    await _fileService.DeleteFileAsync(imageUrl);
                 return false;
             }
             await _userManager.AddToRoleAsync(user, "Customer");

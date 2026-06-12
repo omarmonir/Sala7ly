@@ -17,7 +17,8 @@ namespace Sala7ly.BLL.Mapper
                 Email = profile.User.Email,
                 RegisteredAt = profile.CreatedOn,
                 TotalRequests = profile.TotalRequests,
-                IsActive = profile.User.IsActive
+                IsActive = profile.User.IsActive,
+                ImageUrl = profile.User.ImageUrl
         };
 
         public static CustomerProfileDetailsDto ToDetailsDto(CustomerProfile profile)=> new CustomerProfileDetailsDto

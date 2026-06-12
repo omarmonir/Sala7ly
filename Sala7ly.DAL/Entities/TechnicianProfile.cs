@@ -11,13 +11,13 @@ namespace Sala7ly.DAL.Entities
         }
         public  string UserId { get;  set; }            
 
-        public string Bio { get;set; }
+        public string Bio { get;set; } = string.Empty;
         public int ExperienceYears { get; set; }
         public double OverallRating { get; set; }      
         public int TotalReviews { get;  set; }
         public int CompletedJobs { get;  set; }  
         public int CancelledJobs { get; set; }
-        public string AvgResponseTime { get;  set; }    
+        public string AvgResponseTime { get;  set; }  = string.Empty;  
 
         public bool IsApproved { get;  set; } = false;  
         public bool IsFeatured { get; set; } = false;  // ????????????????????????????????

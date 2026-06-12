@@ -8,6 +8,7 @@ namespace Sala7ly.BLL.Services.Abstraction
     public interface IAuthService
     {
         Task<ResponseLoginDto> LoginAsync(RequestLoginDto request);
+        Task<bool> RegisterAdminAsync(AdminRegisterDto dto);
         Task<string> ForgotPasswordAsync(string email);
         Task<string> ResetPasswordAsync(ResetPasswordDto dto);
         Task<string> LogoutByTokenAsync(string refreshToken);

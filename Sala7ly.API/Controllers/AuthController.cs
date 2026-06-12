@@ -12,10 +12,10 @@ namespace Sala7ly.API.Controllers
     public class AuthController : ControllerBase
     {
         private readonly IAuthService _auth;
-
+        
         public AuthController(IAuthService auth) => _auth = auth;
 
-       
+   
         /// <summary>Login with email/username and password</summary>
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] RequestLoginDto dto)

@@ -23,13 +23,10 @@ namespace Sala7ly.DAL.Common
             services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
             services.AddScoped<IServiceCategoryRepository, ServiceCategoryRepository>();
             services.AddScoped<ICustomerRepository, CustomerRepository>();
-<<<<<<< HEAD
             services.AddScoped<IAddressRepository, AddressRepository>();
-=======
             services.AddScoped<IServiceRequestRepository, ServiceRequestRepository>();
             services.AddScoped<IChatMessageRepository, ChatMessageRepository>();
 
->>>>>>> origin/master
             return services;
         }
     }

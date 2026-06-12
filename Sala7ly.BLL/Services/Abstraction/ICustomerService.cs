@@ -8,6 +8,11 @@ namespace Sala7ly.BLL.Services.Abstraction
     public interface ICustomerService
     {
         Task<CustomerProfileDetailsDto?> GetByIdAsync(int id);
+
+
+        Task<CustomerProfileDetailsDto?> GetMineAsync(string userId);
+
+
         Task<IEnumerable<CustomerListItemDto>> GetAllAsync();
         Task<bool> AddAsync(CustomerRegisterDto dto);
         Task<bool> UpdateAsync(int id, CustomerProfileUpdateDto dto);

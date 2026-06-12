@@ -80,6 +80,9 @@ namespace Sala7ly.BLL.Services.Implementation
 
             return requests.Select(ServiceRequestMapper.ToListItemDto);
         }
+
+
+
     }
 
 }

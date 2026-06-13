@@ -46,7 +46,13 @@ namespace Sala7ly.DAL.Repositories.Implementation
         {
             _context.TechnicianProfiles.Remove(technician);
         }
-
+        public Task<TechnicianProfile?> GetProfileByUserIdAsync(string userId)
+            => _context.TechnicianProfiles
+                .Include(tp => tp.User)
+                .Include(tp => tp.Verifications)
+                .Include(tp => tp.Portfolio)
+                .Include(tp => tp.Categories)
+                .FirstOrDefaultAsync(tp => tp.UserId == userId && tp.IsDeleted != true);
         public async Task<int> SaveChangesAsync()
         {
             return await _context.SaveChangesAsync();

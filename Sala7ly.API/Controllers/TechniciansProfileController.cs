@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Mvc;
 using Sala7ly.BLL.DTOs.TechnicianDTOs;
 using Sala7ly.BLL.Services.Abstraction;
+using System.Security.Claims;
 
 namespace Sala7ly.API.Controllers
 {
@@ -33,6 +34,22 @@ namespace Sala7ly.API.Controllers
             var result = await _technicianService.GetByIdAsync(id);
             if (result is null) return NotFound();
             return Ok(result);
+        }
+        [HttpGet("mine")]
+        [Authorize]
+        public async Task<IActionResult> GetMine()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized(new { Message = "Technician not found" });
+
+            var profile = await _technicianService.GetByUserIdAsync(userId);
+
+            if (profile is null)
+                return NotFound(new { Message = "Technician profile not found" });
+
+            return Ok(profile);
         }
 
         // POST api/technician/register

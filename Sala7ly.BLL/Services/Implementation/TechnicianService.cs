@@ -89,7 +89,14 @@ namespace Sala7ly.BLL.Services.Implementation
             return true;
         }
 
+        public async Task<TechnicianProfileDetailsDto?> GetByUserIdAsync(string userId)
+        {
+            var profile = await _technicianRepo.GetProfileByUserIdAsync(userId);  // ← match the name
+            if (profile is null)
+                return null;
 
+            return TechnicianMapper.ToDetailsDto(profile);
+        }
         public async Task<bool> UpdateAsync(int id, TechnicianProfileUpdateDto dto)
         {
             // 1 — get profile with user included

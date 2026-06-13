@@ -8,7 +8,8 @@ namespace Sala7ly.DAL.Repositories.Abstraction
     {
         Task<List<TechnicianProfile>> GetAllAsync();
         Task<TechnicianProfile> GetByIdAsync(int id);
-        Task<TechnicianProfile> GetByUserIdAsync(string userId);
+        Task<TechnicianProfile> GetByUserIdAsync(string userId); 
+        Task<TechnicianProfile?> GetProfileByUserIdAsync(string userId);
         Task AddAsync(TechnicianProfile technician);
         void Update(TechnicianProfile technician);
         void Delete(TechnicianProfile technician);

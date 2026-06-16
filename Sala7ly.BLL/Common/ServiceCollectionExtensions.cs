@@ -44,7 +44,8 @@ namespace Sala7ly.BLL.Common
                         .WithOrigins(
                             "http://localhost:5173",
                             "http://localhost:4200",
-                            "https://sala7ly.runasp.net"
+                            "https://sala7ly.runasp.net",
+                            "http://localhost:5752"
                         )
                         .AllowAnyMethod()
                         .AllowAnyHeader()
@@ -61,27 +62,7 @@ namespace Sala7ly.BLL.Common
         {
             var jwtSettings = configuration.GetSection("Jwt");
             var secretKey = jwtSettings["Key"];
-            services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
-         .AddJwtBearer(options =>
-         {
-             options.TokenValidationParameters = new TokenValidationParameters
-             {
-                 ValidateIssuer = true,
-                 ValidateAudience = true,
-                 ValidateLifetime = true,
-                 ValidateIssuerSigningKey = true,
-                 ValidIssuer = jwtSettings["Issuer"],
-                 ValidAudience = jwtSettings["Audience"],
-                 IssuerSigningKey = new SymmetricSecurityKey(
-                     Encoding.UTF8.GetBytes(secretKey!)),
-                 NameClaimType = ClaimTypes.NameIdentifier,
-                 ClockSkew = TimeSpan.Zero
-             };
-         });
+           
 
             services.AddIdentity<User, IdentityRole>(options =>
             {
@@ -96,6 +77,44 @@ namespace Sala7ly.BLL.Common
             ).AddEntityFrameworkStores<AppDbContext>()
             .AddDefaultTokenProviders();
 
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+        .AddJwtBearer(options =>
+        {
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = jwtSettings["Issuer"],
+                ValidAudience = jwtSettings["Audience"],
+                IssuerSigningKey = new SymmetricSecurityKey(
+                    Encoding.UTF8.GetBytes(secretKey!)),
+                NameClaimType = ClaimTypes.NameIdentifier,
+                ClockSkew = TimeSpan.Zero
+            };
+            options.Events = new JwtBearerEvents
+            {
+                OnMessageReceived = context =>
+                {
+                    var accessToken = context.Request.Query["access_token"];
+
+                    var path = context.HttpContext.Request.Path;
+                    if (!string.IsNullOrEmpty(accessToken) &&
+                        path.StartsWithSegments("/hubs"))
+                    {
+                        context.Token = accessToken;
+                    }
+
+                    return Task.CompletedTask;
+                }
+            };
+        });
 
             services.ConfigureApplicationCookie(options =>
             {

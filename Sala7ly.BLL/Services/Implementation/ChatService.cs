@@ -34,7 +34,7 @@ namespace Sala7ly.BLL.Services.Implementation
 
             public async Task<bool> CanAccessRequestAsync(string userId, int requestId)
             {
-                var request = await _requestRepo.GetByIdAsync(requestId);
+                var request = await _requestRepo.GetByIdWithPartiesAsync(requestId);
                 if (request is null) return false;
 
 

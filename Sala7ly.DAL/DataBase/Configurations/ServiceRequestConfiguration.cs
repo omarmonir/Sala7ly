@@ -72,9 +72,6 @@ namespace Sala7ly.DAL.DataBase.Configurations
                    .WithOne(x => x.ServiceRequest)
                    .HasForeignKey(x => x.RequestId)
                    .OnDelete(DeleteBehavior.Restrict);
-
-           
-
         }
     }
 }

@@ -1,27 +1,30 @@
-﻿using Microsoft.AspNetCore.Http;
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Sala7ly.BLL.DTOs.VerificationDTOs;
 using Sala7ly.BLL.Mapper;
 using Sala7ly.BLL.Services.Abstraction;
 using Sala7ly.DAL.Entities;
 using Sala7ly.DAL.Repositories.Abstraction;
-using System;
-using System.Collections.Generic;
-using System.IO;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Sala7ly.BLL.Services.Implementation
 {
     public class TechnicianVerificationService : ITechnicianVerificationService
     {
         private readonly ITechnicianVerificationRepository _repository;
+        private readonly ITechnicianProfileRepository _technicianRepository;
         private readonly IFilePathProvider _filePathProvider;
 
         public TechnicianVerificationService(
             ITechnicianVerificationRepository repository,
+            ITechnicianProfileRepository technicianRepository,
             IFilePathProvider filePathProvider)
         {
             _repository = repository;
+            _technicianRepository = technicianRepository;
             _filePathProvider = filePathProvider;
         }
 
@@ -52,12 +55,23 @@ namespace Sala7ly.BLL.Services.Implementation
             if (dto.FrontImage is null || dto.FrontImage.Length == 0) return false;
             if (dto.BackImage is null || dto.BackImage.Length == 0) return false;
 
+            // find the technician profile
+            var technician = await _technicianRepository.GetByIdAsync(dto.TechnicianId);
+            if (technician is null)
+                return false;
+
             var frontUrl = await SaveDocumentAsync(dto.FrontImage);
             if (frontUrl is null) return false;
 
             var backUrl = await SaveDocumentAsync(dto.BackImage);
             if (backUrl is null) return false;
 
+            // update the profile's bio + experience
+            technician.Bio = dto.Bio;
+            technician.ExperienceYears = dto.ExperienceYears;
+            _technicianRepository.Update(technician);
+
+            // create the verification record
             var verification = new TechnicianVerification
             {
                 TechnicianId = dto.TechnicianId,
@@ -68,35 +82,10 @@ namespace Sala7ly.BLL.Services.Implementation
             };
 
             await _repository.AddAsync(verification);
+
+            // one save commits both the profile update and the new verification
             var saved = await _repository.SaveChangesAsync();
             return saved > 0;
-        }
-
-        // saves one file, returns its URL — or null if invalid
-        private async Task<string?> SaveDocumentAsync(IFormFile file)
-        {
-            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".pdf" };
-            var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-            if (!allowedExtensions.Contains(extension))
-                return null;
-
-            const long maxSize = 5 * 1024 * 1024;
-            if (file.Length > maxSize)
-                return null;
-
-            var webRoot = _filePathProvider.GetWebRootPath();
-            var uploadsFolder = Path.Combine(webRoot, "uploads", "verifications");
-            Directory.CreateDirectory(uploadsFolder);
-
-            var fileName = $"{Guid.NewGuid()}{extension}";
-            var fullPath = Path.Combine(uploadsFolder, fileName);
-
-            using (var stream = new FileStream(fullPath, FileMode.Create))
-            {
-                await file.CopyToAsync(stream);
-            }
-
-            return $"/uploads/verifications/{fileName}";
         }
 
         public async Task<bool> ApproveAsync(int verificationId, string adminId)
@@ -128,6 +117,35 @@ namespace Sala7ly.BLL.Services.Implementation
             _repository.Update(verification);
             await _repository.SaveChangesAsync();
             return true;
+        }
+
+        // ── Helpers ──────────────────────────────────────────
+
+        // saves one file, returns its URL — or null if invalid
+        private async Task<string?> SaveDocumentAsync(IFormFile file)
+        {
+            var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".pdf" };
+            var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
+            if (!allowedExtensions.Contains(extension))
+                return null;
+
+            const long maxSize = 5 * 1024 * 1024;
+            if (file.Length > maxSize)
+                return null;
+
+            var webRoot = _filePathProvider.GetWebRootPath();
+            var uploadsFolder = Path.Combine(webRoot, "uploads", "verifications");
+            Directory.CreateDirectory(uploadsFolder);
+
+            var fileName = $"{Guid.NewGuid()}{extension}";
+            var fullPath = Path.Combine(uploadsFolder, fileName);
+
+            using (var stream = new FileStream(fullPath, FileMode.Create))
+            {
+                await file.CopyToAsync(stream);
+            }
+
+            return $"/uploads/verifications/{fileName}";
         }
     }
 }

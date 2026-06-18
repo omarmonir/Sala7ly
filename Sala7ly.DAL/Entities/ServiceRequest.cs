@@ -49,7 +49,7 @@ namespace Sala7ly.DAL.Entities
         public ICollection<Bid> Bids { get; private set; }
         public ICollection<ChatMessage> ChatMessages { get; private set; }
         public ICollection<Ai_Interaction> AiInteractions { get; private set; }
-        public ICollection<TechnicianPortfolio> TechnicianPortfolios { get; private set; }
+        //public ICollection<TechnicianPortfolio> TechnicianPortfolios { get; private set; }
         public Review Review { get; private set; }
 
         public void MarkCompleted()

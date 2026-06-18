@@ -36,6 +36,8 @@ namespace Sala7ly.API.Controllers
             if (result is null) return NotFound();
             return Ok(result);
         }
+
+        // GET api/technician/mine
         [HttpGet("mine")]
         [Authorize]
         public async Task<IActionResult> GetMine()
@@ -62,7 +64,8 @@ namespace Sala7ly.API.Controllers
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
             var success = await _technicianService.AddAsync(dto);
-            if (!success) return Conflict(new { message = "البريد الإلكتروني مستخدم بالفعل" });
+            if (!success)
+                return BadRequest(new { message = "تعذّر إنشاء الحساب. تأكد من أن البريد غير مستخدم وأن كلمة المرور تستوفي الشروط (8 أحرف على الأقل، تحتوي على حرف كبير وصغير ورقم ورمز خاص)." });
 
             return StatusCode(201, new { message = "تم إنشاء حساب الفني بنجاح، في انتظار الموافقة" });
         }

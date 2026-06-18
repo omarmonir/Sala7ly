@@ -9,10 +9,10 @@ namespace Sala7ly.DAL.Entities
     {
         public User()
         {
-            
+
         }
-        public string Name { get;  set; }
-        public string ImageUrl { get;  set; }
+        public string Name { get; set; }
+        public string ImageUrl { get; set; }
         public DateTime? LastLoginAt { get; private set; }
         public DateTime CreatedAt { get; private set; } = DateTime.UtcNow;
         public DateTime UpdatedAt { get; private set; } = DateTime.UtcNow;

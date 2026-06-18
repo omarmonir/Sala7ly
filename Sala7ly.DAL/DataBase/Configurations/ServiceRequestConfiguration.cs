@@ -73,10 +73,7 @@ namespace Sala7ly.DAL.DataBase.Configurations
                    .HasForeignKey(x => x.RequestId)
                    .OnDelete(DeleteBehavior.Restrict);
 
-            builder.HasMany(sr=>sr.TechnicianPortfolios)
-                .WithOne(tp => tp.ServiceRequest)
-                .HasForeignKey(tp => tp.ServiceRequestId)
-                .OnDelete(DeleteBehavior.Restrict);
+           
 
         }
     }

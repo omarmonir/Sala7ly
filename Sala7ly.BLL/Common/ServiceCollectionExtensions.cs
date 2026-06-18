@@ -52,6 +52,16 @@ namespace Sala7ly.BLL.Common
                         .AllowAnyHeader()
                         .AllowCredentials();
                 });
+
+                // Development-only policy
+                options.AddPolicy("AllowAllDev", policy =>
+                {
+                    policy
+                        .SetIsOriginAllowed(_ => true)
+                        .AllowAnyMethod()
+                        .AllowAnyHeader()
+                        .AllowCredentials();
+                });
             });
             services.AddHttpContextAccessor();
             return services;

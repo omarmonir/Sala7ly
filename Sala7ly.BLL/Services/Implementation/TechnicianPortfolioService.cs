@@ -55,10 +55,10 @@ namespace Sala7ly.BLL.Services.Implementation
             var portfolio = new TechnicianPortfolio
             {
                 TechnicianId = dto.TechnicianId,
-                ServiceRequestId = dto.ServiceRequestId,
+                Title = dto.Title,
+                Description = dto.Description,
                 ImageUrlBefore = beforeUrl,
                 ImageUrlAfter = afterUrl,
-                Caption = dto.Caption,
                 UploadedAt = DateTime.UtcNow
             };
 
@@ -74,7 +74,6 @@ namespace Sala7ly.BLL.Services.Implementation
             if (portfolio == null)
                 return null;
 
-            // replace each image only if a new one was uploaded
             if (dto.BeforeImage is not null && dto.BeforeImage.Length > 0)
             {
                 var url = await SaveImageAsync(dto.BeforeImage);
@@ -87,7 +86,8 @@ namespace Sala7ly.BLL.Services.Implementation
                 if (url is not null) portfolio.ImageUrlAfter = url;
             }
 
-            portfolio.Caption = dto.Caption;
+            portfolio.Title = dto.Title;
+            portfolio.Description = dto.Description;
 
             _repository.Update(portfolio);
             await _repository.SaveChangesAsync();
@@ -106,7 +106,6 @@ namespace Sala7ly.BLL.Services.Implementation
             return true;
         }
 
-        // saves one image, returns its URL — or null if invalid
         private async Task<string?> SaveImageAsync(IFormFile file)
         {
             if (file is null || file.Length == 0)
@@ -142,10 +141,10 @@ namespace Sala7ly.BLL.Services.Implementation
             {
                 Id = p.Id,
                 TechnicianId = p.TechnicianId,
-                ServiceRequestId = p.ServiceRequestId,
+                Title = p.Title,
+                Description = p.Description,
                 ImageUrlBefore = p.ImageUrlBefore,
                 ImageUrlAfter = p.ImageUrlAfter,
-                Caption = p.Caption,
                 UploadedAt = p.UploadedAt
             };
         }

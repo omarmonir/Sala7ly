@@ -10,10 +10,10 @@ namespace Sala7ly.DAL.DataBase.Configurations
         {
             builder.HasKey(p => p.Id);
 
+            builder.Property(p => p.Title).IsRequired().HasMaxLength(150);
+            builder.Property(p => p.Description).HasMaxLength(1000);
             builder.Property(p => p.ImageUrlBefore).IsRequired();
             builder.Property(p => p.ImageUrlAfter).IsRequired();
-            builder.Property(p => p.Caption).HasMaxLength(255);
-            builder.Property(p => p.ServiceRequestId).IsRequired(false);
         }
     }
 }

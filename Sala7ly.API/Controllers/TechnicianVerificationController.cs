@@ -52,13 +52,15 @@ namespace Sala7ly.API.Controllers
         [Consumes("multipart/form-data")]
         public async Task<IActionResult> Submit([FromForm] SubmitVerificationDto dto)
         {
-            if (!ModelState.IsValid) return BadRequest(ModelState);
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized();
 
-            var success = await _service.SubmitAsync(dto);
+            var success = await _service.SubmitAsync(dto, userId);
             if (!success)
-                return BadRequest(new { message = "تعذّر رفع المستند. تأكد من الملف ونوع المستند." });
+                return BadRequest(new { message = "تعذّر رفع المستندات. تأكد من الملفات وبياناتك." });
 
-            return StatusCode(201, new { message = "تم رفع المستند بنجاح" });
+            return StatusCode(201, new { message = "تم رفع المستندات بنجاح، في انتظار المراجعة" });
         }
 
         // ── PUT api/technicianverification/{id}/approve  (admin approves)

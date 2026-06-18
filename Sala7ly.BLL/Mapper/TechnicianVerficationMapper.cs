@@ -13,6 +13,8 @@ namespace Sala7ly.BLL.Mapper
                 TechnicianId = v.TechnicianId,
                 TechnicianName = v.Technician?.User?.Name,
                 //DocType = v.DocType.ToString(),
+                IdNumber = v.IdNumber,
+                DegreeCertificateUrls = v.DegreeCertificateUrls,
                 DocumentUrlFront = v.DocumentUrlFront,
                 DocumentUrlBack = v.DocumentUrlBack,
                 Status = v.Status.ToString(),

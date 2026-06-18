@@ -7,7 +7,8 @@ namespace Sala7ly.BLL.DTOs.VerificationDTOs
         public int Id { get; set; }
         public int TechnicianId { get; set; }
         public string TechnicianName { get; set; }
-        //public string DocType { get; set; }
+        public string IdNumber { get; set; }
+        public List<string> DegreeCertificateUrls { get; set; }
         public string DocumentUrlFront { get; set; }
         public string DocumentUrlBack { get; set; }
         public string Status { get; set; }

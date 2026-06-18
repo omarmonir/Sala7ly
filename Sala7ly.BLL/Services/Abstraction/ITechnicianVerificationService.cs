@@ -9,7 +9,7 @@ namespace Sala7ly.BLL.Services.Abstraction
         Task<VerificationDetailsDto?> GetByIdAsync(int id);
         Task<List<VerificationDetailsDto>> GetByTechnicianIdAsync(int technicianId);
         Task<List<VerificationDetailsDto>> GetPendingAsync();
-        Task<bool> SubmitAsync(SubmitVerificationDto dto);
+        Task<bool> SubmitAsync(SubmitVerificationDto dto, string userId);
         Task<bool> ApproveAsync(int verificationId, string adminId);
         Task<bool> RejectAsync(RejectVerificationDto dto, string adminId);
     }

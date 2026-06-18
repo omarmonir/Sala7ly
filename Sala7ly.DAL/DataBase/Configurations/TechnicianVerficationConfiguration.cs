@@ -15,7 +15,15 @@ namespace Sala7ly.DAL.Configurations
 
             builder.Property(v => v.DocumentUrlBack)
                    .IsRequired();
+            builder.Property(v => v.IdNumber)
+                .IsRequired()
+                .HasMaxLength(50);
 
+            builder.Property(v => v.DegreeCertificateUrls)
+                   .HasConversion(
+                       v => string.Join(",", v ?? new List<string>()),
+                       v => new List<string>(v.Split(",", System.StringSplitOptions.RemoveEmptyEntries)))
+                   .HasColumnType("nvarchar(max)");
             builder.Property(v => v.Status)
                    .HasConversion<string>()
                    .HasMaxLength(20)

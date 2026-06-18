@@ -44,15 +44,20 @@ namespace Sala7ly.API.Controllers
 
         // POST: api/technicianportfolios
         [HttpPost]
-        public async Task<IActionResult> Create([FromBody] CreateTechnicianPortfolioDto dto)
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> Create([FromForm] CreateTechnicianPortfolioDto dto)
         {
             var created = await _service.CreateAsync(dto);
+            if (created is null)
+                return BadRequest(new { message = "تعذّر رفع الصور. تأكد من نوع الملفات والحجم." });
+
             return CreatedAtAction(nameof(GetById), new { id = created.Id }, created);
         }
 
         // PUT: api/technicianportfolios
         [HttpPut]
-        public async Task<IActionResult> Update([FromBody] UpdateTechnicianPortfolioDto dto)
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> Update([FromForm] UpdateTechnicianPortfolioDto dto)
         {
             var updated = await _service.UpdateAsync(dto);
             if (updated == null)

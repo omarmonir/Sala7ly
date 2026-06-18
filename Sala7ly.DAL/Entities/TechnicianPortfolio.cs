@@ -7,7 +7,8 @@ namespace Sala7ly.DAL.Entities
         public int TechnicianId { get;  set; }       
         public int? ServiceRequestId { get;  set; }         // from service request
 
-        public string ImageUrl { get;  set; }
+        public string ImageUrlBefore { get; set; }
+        public string ImageUrlAfter { get; set; }
         public string Caption { get;  set; }
         public string Type { get;  set; }           
         public DateTime UploadedAt { get;  set; }

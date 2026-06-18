@@ -11,9 +11,9 @@ namespace Sala7ly.DAL.DataBase.Configurations
             builder.HasKey(v => v.Id);
 
             
-            builder.Property(v => v.DocType)
-                   .HasConversion<string>()
-                   .HasMaxLength(20);
+            //builder.Property(v => v.DocType)
+            //       .HasConversion<string>()
+            //       .HasMaxLength(20);
 
             builder.Property(v => v.Status)
                    .HasConversion<string>()

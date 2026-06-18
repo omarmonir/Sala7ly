@@ -7,7 +7,8 @@ namespace Sala7ly.BLL.DTOs.TechnicianDTOs
         // user fields that can change
         public string Name { get; set; }
         public string PhoneNumber { get; set; }
-        public IFormFile? ImageUrl { get; set; }
+        public IFormFile? Image { get; set; }
+
 
         // technician profile fields that can change
         public string Bio { get; set; }

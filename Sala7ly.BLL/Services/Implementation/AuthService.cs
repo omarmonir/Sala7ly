@@ -259,8 +259,8 @@ namespace Sala7ly.BLL.Services.Implementation
 
             var authSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!));
             var token = new JwtSecurityToken(
-                issuer: _configuration["Jwt:ValidIssuer"],
-                audience: _configuration["Jwt:ValidAudience"],
+                 issuer: _configuration["Jwt:Issuer"],      // ✅ مش ValidIssuer
+                 audience: _configuration["Jwt:Audience"],  // ✅ مش ValidAudience
                 expires: DateTime.UtcNow.AddMinutes(
                                         _configuration.GetValue<int>("Jwt:TokenValidityInMinutes")),
                 claims: authClaims,

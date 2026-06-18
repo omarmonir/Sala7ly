@@ -104,19 +104,30 @@ namespace Sala7ly.BLL.Services.Implementation
             if (profile is null)
                 return false;
 
-            // 2 — apply changes to both user and profile
+            // 2 — handle image upload
+            if (dto.Image is not null)
+            {
+                var oldImageUrl = profile.User.ImageUrl;
+
+                var newImageUrl = await _fileService.SaveFileAsync(dto.Image, "technicians");
+                profile.User.SetImageUrl(newImageUrl);
+
+                if (!string.IsNullOrEmpty(oldImageUrl))
+                    await _fileService.DeleteFileAsync(oldImageUrl);
+            }
+
+            // 3 — apply changes to both user and profile
             TechnicianMapper.ApplyUpdateToUser(dto, profile.User);
             TechnicianMapper.ApplyUpdateToProfile(dto, profile);
             profile.MarkUpdated(profile.UserId);
 
-            // 3 — persist both
+            // 4 — persist both
             await _userManager.UpdateAsync(profile.User);
             _technicianRepo.Update(profile);
             await _technicianRepo.SaveChangesAsync();
 
             return true;
         }
-
         public async Task<bool> DeleteAsync(int id, string deletedBy)
         {
             // 1 — get profile with user included

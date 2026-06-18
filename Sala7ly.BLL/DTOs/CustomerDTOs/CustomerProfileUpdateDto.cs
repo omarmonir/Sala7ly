@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.Text;
+using Microsoft.AspNetCore.Http;
 
 namespace Sala7ly.BLL.DTOs.CustomerDTOs
 {
@@ -14,7 +15,10 @@ namespace Sala7ly.BLL.DTOs.CustomerDTOs
         [Required(ErrorMessage = "رقم الهاتف مطلوب")]
         [Phone(ErrorMessage = "رقم الهاتف غير صحيح")]
         public string PhoneNumber { get; set; }
-        public IFormFile? ImageUrl { get; set; }
+
+        public IFormFile? Image { get; set; }
+
+
         public string AddressDetails { get; set; }
 
     }

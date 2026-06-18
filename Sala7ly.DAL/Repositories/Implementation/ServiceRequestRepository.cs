@@ -35,9 +35,12 @@ namespace Sala7ly.DAL.Repositories.Implementation
                 .ToListAsync();
 
         public async Task<ServiceRequest?> GetByIdWithPartiesAsync(int requestId)
-            => await _context.ServiceRequests
-                .Include(r => r.Profile)        
-                .Include(r => r.SelectedBid)    
-                .FirstOrDefaultAsync(r => r.Id == requestId);
+    => await _context.ServiceRequests
+        .Include(r => r.Profile)
+            .ThenInclude(p => p.User)
+        .Include(r => r.SelectedBid)
+            .ThenInclude(b => b.Technician)
+                .ThenInclude(t => t.User)
+        .FirstOrDefaultAsync(r => r.Id == requestId && r.IsDeleted != true);
     }
 }

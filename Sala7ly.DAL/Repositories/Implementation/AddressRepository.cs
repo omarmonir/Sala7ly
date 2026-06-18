@@ -1,10 +1,10 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System;
+using System.Collections.Generic;
+using System.Text;
+using Microsoft.EntityFrameworkCore;
 using Sala7ly.DAL.DataBase;
 using Sala7ly.DAL.Entities;
 using Sala7ly.DAL.Repositories.Abstraction;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Sala7ly.DAL.Repositories.Implementation
 {

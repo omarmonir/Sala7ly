@@ -89,4 +89,6 @@ app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.MapHub<ChatHub>("/chathub");
+app.MapHub<BiddingHub>("/hubs/bidding");
+
 await app.RunAsync();

@@ -34,7 +34,8 @@ namespace Sala7ly.BLL.Common
 
             services.AddScoped<IFileService, FileService>();
             services.AddScoped<IServiceRequestService, ServiceRequestService>();
-            services.AddScoped<IChatService, ChatService>();    
+            services.AddScoped<IChatService, ChatService>();
+            services.AddScoped<IBidService, BidService>();
 
             services.AddCors(options =>
             {

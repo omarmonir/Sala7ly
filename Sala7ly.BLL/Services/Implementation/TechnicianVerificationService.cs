@@ -50,13 +50,12 @@ namespace Sala7ly.BLL.Services.Implementation
 
         // ── Commands ─────────────────────────────────────────
 
-        public async Task<bool> SubmitAsync(SubmitVerificationDto dto)
+        public async Task<bool> SubmitAsync(SubmitVerificationDto dto, string userId)
         {
             if (dto.FrontImage is null || dto.FrontImage.Length == 0) return false;
             if (dto.BackImage is null || dto.BackImage.Length == 0) return false;
 
-            // find the technician profile
-            var technician = await _technicianRepository.GetByIdAsync(dto.TechnicianId);
+            var technician = await _technicianRepository.GetByUserIdAsync(userId);
             if (technician is null)
                 return false;
 
@@ -66,24 +65,34 @@ namespace Sala7ly.BLL.Services.Implementation
             var backUrl = await SaveDocumentAsync(dto.BackImage);
             if (backUrl is null) return false;
 
-            // update the profile's bio + experience
+            // save each degree certificate (optional)
+            var degreeUrls = new List<string>();
+            if (dto.DegreeCertificates is not null)
+            {
+                foreach (var cert in dto.DegreeCertificates)
+                {
+                    var url = await SaveDocumentAsync(cert);
+                    if (url is null) return false;   // an invalid file fails the whole submit
+                    degreeUrls.Add(url);
+                }
+            }
+
             technician.Bio = dto.Bio;
             technician.ExperienceYears = dto.ExperienceYears;
             _technicianRepository.Update(technician);
 
-            // create the verification record
             var verification = new TechnicianVerification
             {
-                TechnicianId = dto.TechnicianId,
+                TechnicianId = technician.Id,
+                IdNumber = dto.IdNumber,
                 DocumentUrlFront = frontUrl,
                 DocumentUrlBack = backUrl,
+                DegreeCertificateUrls = degreeUrls,
                 Status = VerificationStatus.Pending,
                 SubmittedAt = DateTime.UtcNow
             };
 
             await _repository.AddAsync(verification);
-
-            // one save commits both the profile update and the new verification
             var saved = await _repository.SaveChangesAsync();
             return saved > 0;
         }

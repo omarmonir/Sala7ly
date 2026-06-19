@@ -10,7 +10,6 @@ namespace Sala7ly.DAL.Entities
             
         }
         public  string UserId { get;  set; }            
-
         public string Bio { get;set; } = string.Empty;
         public int ExperienceYears { get; set; }
         public double OverallRating { get; set; }      

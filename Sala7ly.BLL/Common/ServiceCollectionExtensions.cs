@@ -34,7 +34,8 @@ namespace Sala7ly.BLL.Common
 
             services.AddScoped<IFileService, FileService>();
             services.AddScoped<IServiceRequestService, ServiceRequestService>();
-            services.AddScoped<IChatService, ChatService>();    
+            services.AddScoped<IChatService, ChatService>();
+            services.AddScoped<IBidService, BidService>();
 
             services.AddCors(options =>
             {
@@ -47,6 +48,16 @@ namespace Sala7ly.BLL.Common
                             "https://sala7ly.runasp.net",
                             "http://localhost:5752"
                         )
+                        .AllowAnyMethod()
+                        .AllowAnyHeader()
+                        .AllowCredentials();
+                });
+
+                // Development-only policy
+                options.AddPolicy("AllowAllDev", policy =>
+                {
+                    policy
+                        .SetIsOriginAllowed(_ => true)
                         .AllowAnyMethod()
                         .AllowAnyHeader()
                         .AllowCredentials();

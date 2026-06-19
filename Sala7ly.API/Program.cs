@@ -78,15 +78,26 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.UseStaticFiles();
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
+app.UseSwagger();
+app.UseSwaggerUI(c =>
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "Sala7ly API v1"));
 
-
 app.UseHttpsRedirection();
-app.UseCors("AllowAll");
+
+// Use more permissive CORS in development, stricter in production
+if (app.Environment.IsDevelopment())
+{
+    app.UseCors("AllowAllDev");
+}
+else
+{
+    app.UseCors("AllowAll");
+}
+
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.MapHub<ChatHub>("/chathub");
+app.MapHub<BiddingHub>("/hubs/bidding");
+
 await app.RunAsync();

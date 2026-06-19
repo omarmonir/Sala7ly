@@ -27,6 +27,7 @@ namespace Sala7ly.DAL.Common
             services.AddScoped<IServiceRequestRepository, ServiceRequestRepository>();
             services.AddScoped<ITechnicianVerificationRepository, TechnicianVerificationRepository>();
             services.AddScoped<IChatMessageRepository, ChatMessageRepository>();
+            services.AddScoped<IBidRepository, BidRepository>();
             return services;    
         }
     }

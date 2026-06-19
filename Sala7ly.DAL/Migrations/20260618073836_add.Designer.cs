@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Sala7ly.DAL.DataBase;
 
@@ -11,9 +12,11 @@ using Sala7ly.DAL.DataBase;
 namespace Sala7ly.DAL.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260618073836_add")]
+    partial class add
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1146,6 +1149,7 @@ namespace Sala7ly.DAL.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("Description")
+                        .IsRequired()
                         .HasMaxLength(1000)
                         .HasColumnType("nvarchar(1000)");
 
@@ -1160,10 +1164,14 @@ namespace Sala7ly.DAL.Migrations
                     b.Property<bool?>("IsDeleted")
                         .HasColumnType("bit");
 
+                    b.Property<int?>("ServiceRequestId")
+                        .HasColumnType("int");
+
                     b.Property<int>("TechnicianId")
                         .HasColumnType("int");
 
                     b.Property<string>("Title")
+                        .IsRequired()
                         .HasMaxLength(150)
                         .HasColumnType("nvarchar(150)");
 
@@ -1177,6 +1185,8 @@ namespace Sala7ly.DAL.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ServiceRequestId");
 
                     b.HasIndex("TechnicianId");
 
@@ -1288,10 +1298,6 @@ namespace Sala7ly.DAL.Migrations
                     b.Property<DateTime?>("CreatedOn")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("DegreeCertificateUrls")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
-
                     b.Property<string>("DeletedBy")
                         .HasColumnType("nvarchar(max)");
 
@@ -1305,11 +1311,6 @@ namespace Sala7ly.DAL.Migrations
                     b.Property<string>("DocumentUrlFront")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("IdNumber")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
 
                     b.Property<bool?>("IsDeleted")
                         .HasColumnType("bit");
@@ -1911,6 +1912,10 @@ namespace Sala7ly.DAL.Migrations
 
             modelBuilder.Entity("Sala7ly.DAL.Entities.TechnicianPortfolio", b =>
                 {
+                    b.HasOne("Sala7ly.DAL.Entities.ServiceRequest", null)
+                        .WithMany("TechnicianPortfolios")
+                        .HasForeignKey("ServiceRequestId");
+
                     b.HasOne("Sala7ly.DAL.Entities.TechnicianProfile", "Technician")
                         .WithMany("Portfolio")
                         .HasForeignKey("TechnicianId")
@@ -2012,6 +2017,8 @@ namespace Sala7ly.DAL.Migrations
 
                     b.Navigation("Review")
                         .IsRequired();
+
+                    b.Navigation("TechnicianPortfolios");
                 });
 
             modelBuilder.Entity("Sala7ly.DAL.Entities.TechnicianProfile", b =>

@@ -49,13 +49,42 @@ namespace Sala7ly.DAL.Entities
         public ICollection<Bid> Bids { get; private set; }
         public ICollection<ChatMessage> ChatMessages { get; private set; }
         public ICollection<Ai_Interaction> AiInteractions { get; private set; }
-        //public ICollection<TechnicianPortfolio> TechnicianPortfolios { get; private set; }
         public Review Review { get; private set; }
+
+        public void AssignBid(int bidId)
+        {
+            if (Status != Status.open)
+                throw new InvalidOperationException("Request is not open.");
+            SelectedBidId = bidId;
+            Status = Status.assigned;
+        }
+
+        public void Start()
+        {
+            if (Status != Status.assigned)
+                throw new InvalidOperationException("Request must be assigned first.");
+            Status = Status.in_progress;
+            StartedAt = DateTime.UtcNow;
+        }
 
         public void MarkCompleted()
         {
+            if (Status != Status.in_progress)
+                throw new InvalidOperationException("Request must be in progress.");
             Status = Status.completed;
-            CompletedAt = DateTime.Now;
+            CompletedAt = DateTime.UtcNow;
+        }
+        public void Cancel()
+        {
+            if (Status == Status.completed)
+                throw new InvalidOperationException("Cannot cancel a completed request.");
+            Status = Status.cancelled;
+        }
+
+        public void SetAiData(decimal priceMin, decimal priceMax)
+        {
+            AiPriceMin = priceMin;
+            AiPriceMax = priceMax;
         }
     }
 }

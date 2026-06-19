@@ -1,7 +1,7 @@
-﻿using Sala7ly.BLL.DTOs.AddressDTOs;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Sala7ly.BLL.DTOs.AddressDTOs;
 
 namespace Sala7ly.BLL.Services.Abstraction
 {

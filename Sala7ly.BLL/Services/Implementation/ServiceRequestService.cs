@@ -39,16 +39,25 @@ namespace Sala7ly.BLL.Services.Implementation
         {
             var customer = await _customerRepository.GetByUserIdAsync(userId);
             if (customer is null) return false;
-            var customerId = customer.Id;
+
+            var imageUrls = new List<string>();
+            if (dto.Images != null && dto.Images.Any())
+            {
+                foreach (var image in dto.Images)
+                {
+                    imageUrls.Add(image.FileName);
+                }
+            }
+
             var request = new ServiceRequest(
                 dto.Title,
                 dto.Description,
-                dto.ImageUrls,
+                imageUrls,
                 dto.Urgency,
                 dto.BookingMode,
                 dto.IsEmergency,
                 dto.ScheduledAt,
-                customerId,
+                customer.Id,
                 dto.AddressId,
                 dto.CategoryId
             );

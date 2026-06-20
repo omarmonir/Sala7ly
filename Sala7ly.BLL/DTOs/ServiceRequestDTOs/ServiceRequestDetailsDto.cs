@@ -20,5 +20,8 @@ namespace Sala7ly.BLL.DTOs.ServiceRequestDTOs
         public int CategoryId { get; set; }
         public int AddressId { get; set; }
         public DateTime? CreatedOn { get; set; }
+        public string? CustomerName { get; set; }
+        public string? CategoryName { get; set; }
+        public string? Address { get; set; }
     }
 }

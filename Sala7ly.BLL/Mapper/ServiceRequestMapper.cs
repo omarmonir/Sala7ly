@@ -35,7 +35,10 @@ namespace Sala7ly.BLL.Mapper
             CustomerId = request.CustomerId,
             CategoryId = request.CategoryId,
             AddressId = request.AddressId,
-            CreatedOn = request.CreatedOn
+            CreatedOn = request.CreatedOn,
+            CustomerName = request.Profile?.User?.Name,
+            CategoryName = request.Category?.NameAr,
+            Address = request.Address?.Street
         };
     }
 }

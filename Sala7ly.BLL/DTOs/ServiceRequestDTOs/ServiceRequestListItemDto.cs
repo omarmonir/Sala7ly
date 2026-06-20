@@ -9,5 +9,6 @@
         public bool IsEmergency { get; set; }
         public DateTime ScheduledAt { get; set; }
         public int CategoryId { get; set; }
+        public string? CustomerName { get; set; }
     }
 }

@@ -86,5 +86,12 @@ namespace Sala7ly.DAL.Entities
             AiPriceMin = priceMin;
             AiPriceMax = priceMax;
         }
+
+        public void UpdateDetails(string title, string description, DateTime scheduledAt)
+        {
+            Title = title;
+            Description = description;
+            ScheduledAt = scheduledAt;
+        }
     }
 }

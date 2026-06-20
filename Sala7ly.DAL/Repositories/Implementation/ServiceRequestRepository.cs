@@ -16,12 +16,12 @@ namespace Sala7ly.DAL.Repositories.Implementation
         }
 
         public new async Task<ServiceRequest?> GetByIdAsync(int id)
-            => await _context.ServiceRequests
-                .Include(r => r.Profile)
-                .Include(r => r.Category)
-                .Include(r => r.Address)
-                .FirstOrDefaultAsync(r => r.Id == id && r.IsDeleted != true);
-
+    => await _context.ServiceRequests
+        .Include(r => r.Profile)
+            .ThenInclude(p => p.User)
+        .Include(r => r.Category)
+        .Include(r => r.Address)
+        .FirstOrDefaultAsync(r => r.Id == id && r.IsDeleted != true);
         public async Task<IEnumerable<ServiceRequest>> GetByCustomerIdAsync(int customerId)
             => await _context.ServiceRequests
                 .Where(r => r.CustomerId == customerId && r.IsDeleted != true)

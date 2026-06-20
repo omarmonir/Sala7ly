@@ -20,8 +20,8 @@ namespace Sala7ly.API.Controllers
         // POST api/requests
         [HttpPost]
         [Authorize]
-        public async Task<IActionResult> Create([FromBody] CreateServiceRequestDto dto)
-        {
+        public async Task<IActionResult> Create([FromForm] CreateServiceRequestDto dto)
+        { 
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 

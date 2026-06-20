@@ -15,7 +15,8 @@ namespace Sala7ly.BLL.Mapper
             Urgency = request.Urgency.ToString(),
             IsEmergency = request.IsEmergency,
             ScheduledAt = request.ScheduledAt,
-            CategoryId = request.CategoryId
+            CategoryId = request.CategoryId,
+            CustomerName = request.Profile?.User?.Name
         };
 
         public static ServiceRequestDetailsDto ToDetailsDto(ServiceRequest request) => new ServiceRequestDetailsDto

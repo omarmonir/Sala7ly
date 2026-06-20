@@ -10,6 +10,7 @@ namespace Sala7ly.BLL.Services.Implementation
     {
         private readonly IServiceRequestRepository _serviceRequestRepository;
         private readonly ICustomerRepository _customerRepository;
+
         public ServiceRequestService(IServiceRequestRepository serviceRequestRepository, ICustomerRepository customerRepository)
         {
             _serviceRequestRepository = serviceRequestRepository;
@@ -32,6 +33,12 @@ namespace Sala7ly.BLL.Services.Implementation
         public async Task<IEnumerable<ServiceRequestListItemDto>> GetOpenRequestsAsync()
         {
             var requests = await _serviceRequestRepository.GetOpenRequestsAsync();
+            return requests.Select(ServiceRequestMapper.ToListItemDto);
+        }
+
+        public async Task<IEnumerable<ServiceRequestListItemDto>> GetAllAsync()
+        {
+            var requests = await _serviceRequestRepository.GetAllAsync();
             return requests.Select(ServiceRequestMapper.ToListItemDto);
         }
 
@@ -78,20 +85,34 @@ namespace Sala7ly.BLL.Services.Implementation
             return true;
         }
 
+        public async Task<bool> UpdateAsync(int id, UpdateServiceRequestDto dto)
+        {
+            var request = await _serviceRequestRepository.GetByIdAsync(id);
+            if (request is null) return false;
+
+            request.UpdateDetails(dto.Title, dto.Description, dto.ScheduledAt);
+            _serviceRequestRepository.Update(request);
+            await _serviceRequestRepository.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> DeleteAsync(int id)
+        {
+            var request = await _serviceRequestRepository.GetByIdAsync(id);
+            if (request is null) return false;
+
+            _serviceRequestRepository.Delete(request);
+            await _serviceRequestRepository.SaveChangesAsync();
+            return true;
+        }
+
         public async Task<IEnumerable<ServiceRequestListItemDto>> GetMineAsync(string userId)
         {
             var customer = await _customerRepository.GetByUserIdAsync(userId);
-
-            if (customer is null)
-                return Enumerable.Empty<ServiceRequestListItemDto>();
+            if (customer is null) return Enumerable.Empty<ServiceRequestListItemDto>();
 
             var requests = await _serviceRequestRepository.GetByCustomerIdAsync(customer.Id);
-
             return requests.Select(ServiceRequestMapper.ToListItemDto);
         }
-
-
-
     }
-
 }

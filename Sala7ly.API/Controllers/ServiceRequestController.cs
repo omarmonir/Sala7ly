@@ -21,7 +21,7 @@ namespace Sala7ly.API.Controllers
         [HttpPost]
         [Authorize]
         public async Task<IActionResult> Create([FromForm] CreateServiceRequestDto dto)
-        { 
+        {
             if (!ModelState.IsValid)
                 return BadRequest(ModelState);
 
@@ -36,20 +36,28 @@ namespace Sala7ly.API.Controllers
             return StatusCode(201, new { Message = "Request created successfully" });
         }
 
+        // GET api/requests - Admin only
+        [HttpGet]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetAll()
+        {
+            var requests = await _serviceRequestService.GetAllAsync();
+            return Ok(requests);
+        }
+
         // GET api/requests/mine
         [HttpGet("mine")]
         [Authorize]
         public async Task<IActionResult> GetMine()
         {
             var createdBy = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
             if (string.IsNullOrEmpty(createdBy))
                 return Unauthorized(new { Message = "Customer not found" });
 
             var requests = await _serviceRequestService.GetMineAsync(createdBy);
-
             return Ok(requests);
         }
+
         // GET api/requests/open
         [HttpGet("open")]
         [Authorize]
@@ -81,6 +89,33 @@ namespace Sala7ly.API.Controllers
                 return NotFound(new { Message = "Request not found" });
 
             return Ok(new { Message = "Request completed successfully" });
+        }
+
+        // PUT api/requests/{id} - Admin only
+        [HttpPut("{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Update(int id, [FromBody] UpdateServiceRequestDto dto)
+        {
+            if (!ModelState.IsValid)
+                return BadRequest(ModelState);
+
+            var result = await _serviceRequestService.UpdateAsync(id, dto);
+            if (!result)
+                return NotFound(new { Message = "Request not found" });
+
+            return Ok(new { Message = "Request updated successfully" });
+        }
+
+        // DELETE api/requests/{id} - Admin only
+        [HttpDelete("{id}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var result = await _serviceRequestService.DeleteAsync(id);
+            if (!result)
+                return NotFound(new { Message = "Request not found" });
+
+            return Ok(new { Message = "Request deleted successfully" });
         }
     }
 }

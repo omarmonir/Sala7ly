@@ -17,9 +17,9 @@ namespace Sala7ly.DAL.Entities
 
         public string Body { get; set; } = null!;
 
-        public string DeepLink { get; set; }
+        public string? DeepLink { get; set; }
 
-        public string Metadata { get; set; } 
+        public string? Metadata { get; set; } 
 
         public bool IsRead { get; set; }
 

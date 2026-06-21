@@ -3,6 +3,7 @@ using Sala7ly.BLL.DTOs.TechnicianDTOs;
 using Sala7ly.BLL.Mapper;
 using Sala7ly.BLL.Services.Abstraction;
 using Sala7ly.DAL.Entities;
+using Sala7ly.DAL.Enums;
 using Sala7ly.DAL.Repositories.Abstraction;
 using System;
 using System.Collections.Generic;
@@ -15,15 +16,15 @@ namespace Sala7ly.BLL.Services.Implementation
     {
         private readonly ITechnicianProfileRepository _technicianRepo;
         private readonly UserManager<User> _userManager;
-        private readonly IFileService _fileService;
+        private readonly INotificationService _notificationService;
 
         public TechnicianService(ITechnicianProfileRepository technicianRepo,
-                                UserManager<User> userManager,
-                                IFileService fileService)
+                                 UserManager<User> userManager,
+                                 INotificationService notificationService)
         {
             _technicianRepo = technicianRepo;
             _userManager = userManager;
-            _fileService = fileService;
+            _notificationService = notificationService;
         }
 
         // Queries
@@ -45,58 +46,61 @@ namespace Sala7ly.BLL.Services.Implementation
             return profiles.Select(TechnicianMapper.ToListItemDto);
         }
 
+        public async Task<TechnicianProfileDetailsDto?> GetByUserIdAsync(string userId)
+        {
+            var profile = await _technicianRepo.GetByUserIdAsync(userId);
+
+            if (profile is null)
+                return null;
+
+            return TechnicianMapper.ToDetailsDto(profile);
+        }
+
         // Commands
 
         public async Task<bool> AddAsync(TechnicianRegisterDto dto)
         {
+            // 1 — check email not already taken
             var existingUser = await _userManager.FindByEmailAsync(dto.Email);
-            if (existingUser is not null) return false;
+            if (existingUser is not null)
+                return false;
 
-            // upload image if provided
-            string? imageUrl = null;
-            if (dto.Image is not null)
-                imageUrl = await _fileService.SaveFileAsync(dto.Image, "technicians");
-
+            // 2 — map dto → entities
             var user = TechnicianMapper.ToUserEntity(dto);
-            if (imageUrl is not null)
-                user.SetImageUrl(imageUrl);
-
             var profile = TechnicianMapper.ToProfileEntity(dto);
 
+            // 3 — create user via Identity
             var result = await _userManager.CreateAsync(user, dto.Password);
             if (!result.Succeeded)
-            {
-                if (imageUrl is not null)
-                    await _fileService.DeleteFileAsync(imageUrl);
                 return false;
-            }
 
+            // 4 — link profile and save
             profile.UserId = user.Id;
             profile.MarkCreated(user.Id);
 
             await _technicianRepo.AddAsync(profile);
             var saved = await _technicianRepo.SaveChangesAsync();
 
+            // 5 — rollback user if profile save failed
             if (saved == 0)
             {
                 await _userManager.DeleteAsync(user);
-                if (imageUrl is not null)
-                    await _fileService.DeleteFileAsync(imageUrl);
                 return false;
             }
 
             await _userManager.AddToRoleAsync(user, "Technician");
+
+            // 6 — send a welcome notification nudging them to verify
+            await _notificationService.NotifyUserAsync(
+                userId: user.Id,
+                type: NotificationType.verification,
+                title: "مرحباً بك في صلّحلي 👋",
+                body: "سعداء بانضمامك! اضغط هنا للانتقال إلى صفحة التوثيق وإكمال توثيق حسابك لتتمكن من استقبال الطلبات.",
+                deepLink: null);
+
             return true;
         }
 
-        public async Task<TechnicianProfileDetailsDto?> GetByUserIdAsync(string userId)
-        {
-            var profile = await _technicianRepo.GetProfileByUserIdAsync(userId);  // ← match the name
-            if (profile is null)
-                return null;
-
-            return TechnicianMapper.ToDetailsDto(profile);
-        }
         public async Task<bool> UpdateAsync(int id, TechnicianProfileUpdateDto dto)
         {
             // 1 — get profile with user included
@@ -104,30 +108,19 @@ namespace Sala7ly.BLL.Services.Implementation
             if (profile is null)
                 return false;
 
-            // 2 — handle image upload
-            if (dto.Image is not null)
-            {
-                var oldImageUrl = profile.User.ImageUrl;
-
-                var newImageUrl = await _fileService.SaveFileAsync(dto.Image, "technicians");
-                profile.User.SetImageUrl(newImageUrl);
-
-                if (!string.IsNullOrEmpty(oldImageUrl))
-                    await _fileService.DeleteFileAsync(oldImageUrl);
-            }
-
-            // 3 — apply changes to both user and profile
+            // 2 — apply changes to both user and profile
             TechnicianMapper.ApplyUpdateToUser(dto, profile.User);
             TechnicianMapper.ApplyUpdateToProfile(dto, profile);
             profile.MarkUpdated(profile.UserId);
 
-            // 4 — persist both
+            // 3 — persist both
             await _userManager.UpdateAsync(profile.User);
             _technicianRepo.Update(profile);
             await _technicianRepo.SaveChangesAsync();
 
             return true;
         }
+
         public async Task<bool> DeleteAsync(int id, string deletedBy)
         {
             // 1 — get profile with user included

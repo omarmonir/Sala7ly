@@ -4,10 +4,12 @@ using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
+using Microsoft.AspNetCore.Identity;
 using Sala7ly.BLL.DTOs.VerificationDTOs;
 using Sala7ly.BLL.Mapper;
 using Sala7ly.BLL.Services.Abstraction;
 using Sala7ly.DAL.Entities;
+using Sala7ly.DAL.Enums;
 using Sala7ly.DAL.Repositories.Abstraction;
 
 namespace Sala7ly.BLL.Services.Implementation
@@ -17,15 +19,21 @@ namespace Sala7ly.BLL.Services.Implementation
         private readonly ITechnicianVerificationRepository _repository;
         private readonly ITechnicianProfileRepository _technicianRepository;
         private readonly IFilePathProvider _filePathProvider;
+        private readonly INotificationService _notificationService;
+        private readonly UserManager<User> _userManager;
 
         public TechnicianVerificationService(
             ITechnicianVerificationRepository repository,
             ITechnicianProfileRepository technicianRepository,
-            IFilePathProvider filePathProvider)
+            IFilePathProvider filePathProvider,
+            INotificationService notificationService,
+            UserManager<User> userManager)
         {
             _repository = repository;
             _technicianRepository = technicianRepository;
             _filePathProvider = filePathProvider;
+            _notificationService = notificationService;
+            _userManager = userManager;
         }
 
         // ── Queries ──────────────────────────────────────────
@@ -65,14 +73,13 @@ namespace Sala7ly.BLL.Services.Implementation
             var backUrl = await SaveDocumentAsync(dto.BackImage);
             if (backUrl is null) return false;
 
-            // save each degree certificate (optional)
             var degreeUrls = new List<string>();
             if (dto.DegreeCertificates is not null)
             {
                 foreach (var cert in dto.DegreeCertificates)
                 {
                     var url = await SaveDocumentAsync(cert);
-                    if (url is null) return false;   // an invalid file fails the whole submit
+                    if (url is null) return false;
                     degreeUrls.Add(url);
                 }
             }
@@ -94,7 +101,24 @@ namespace Sala7ly.BLL.Services.Implementation
 
             await _repository.AddAsync(verification);
             var saved = await _repository.SaveChangesAsync();
-            return saved > 0;
+
+            if (saved <= 0)
+                return false;
+
+            // notify every admin that a new verification needs review
+            var admins = await _userManager.GetUsersInRoleAsync("Admin");
+            foreach (var admin in admins)
+            {
+                await _notificationService.NotifyUserAsync(
+                    userId: admin.Id,
+                    type: NotificationType.verification,
+                    title: "طلب توثيق جديد",
+                    body: "قام أحد الفنيين بإرسال مستندات التوثيق للمراجعة.",
+                    actorId: userId,
+                    metadata: $"{{\"verificationId\": {verification.Id}, \"technicianId\": {technician.Id}}}");
+            }
+
+            return true;
         }
 
         public async Task<bool> ApproveAsync(int verificationId, string adminId)
@@ -130,7 +154,6 @@ namespace Sala7ly.BLL.Services.Implementation
 
         // ── Helpers ──────────────────────────────────────────
 
-        // saves one file, returns its URL — or null if invalid
         private async Task<string?> SaveDocumentAsync(IFormFile file)
         {
             var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".pdf" };

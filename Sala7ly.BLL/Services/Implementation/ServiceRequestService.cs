@@ -52,7 +52,21 @@ namespace Sala7ly.BLL.Services.Implementation
             {
                 foreach (var image in dto.Images)
                 {
-                    imageUrls.Add(image.FileName);
+                     
+                    var fileName = $"{Guid.NewGuid()}{Path.GetExtension(image.FileName)}";
+                    var folderPath = Path.Combine("wwwroot", "uploads", "requests");
+
+                    if (!Directory.Exists(folderPath))
+                        Directory.CreateDirectory(folderPath);
+
+                    var filePath = Path.Combine(folderPath, fileName);
+
+                    using (var stream = new FileStream(filePath, FileMode.Create))
+                    {
+                        await image.CopyToAsync(stream);
+                    }
+
+                    imageUrls.Add($"/uploads/requests/{fileName}");
                 }
             }
 

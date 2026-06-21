@@ -30,6 +30,7 @@ namespace Sala7ly.BLL.Common
             services.AddScoped<ITechnicianPortfolioService, TechnicianPortfolioService>();
             services.AddScoped<ITechnicianVerificationService, TechnicianVerificationService>();
             services.AddScoped<IAddressService, AddressService>();
+            services.AddScoped<INotificationService, NotificationService>();
 
 
             services.AddScoped<IFileService, FileService>();

@@ -50,5 +50,18 @@ namespace Sala7ly.DAL.Repositories.Implementation
                     .ThenInclude(b => b.Technician)
                         .ThenInclude(t => t.User)
                 .FirstOrDefaultAsync(r => r.Id == requestId && r.IsDeleted != true);
+
+        public async Task<IEnumerable<ServiceRequest>> GetAssignedByTechnicianUserIdAsync(string userId)
+     => await _context.ServiceRequests
+         .Include(r => r.Profile)
+             .ThenInclude(p => p.User)
+         .Include(r => r.Bids)
+             .ThenInclude(b => b.Technician)
+                 .ThenInclude(t => t.User)
+         .Where(r => r.Status == Status.assigned &&
+                     r.Bids.Any(b => b.Technician.User.Id == userId) &&
+                     r.IsDeleted != true)
+         .OrderByDescending(r => r.CreatedOn)
+         .ToListAsync();
     }
 }

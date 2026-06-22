@@ -128,5 +128,11 @@ namespace Sala7ly.BLL.Services.Implementation
             var requests = await _serviceRequestRepository.GetByCustomerIdAsync(customer.Id);
             return requests.Select(ServiceRequestMapper.ToListItemDto);
         }
+
+        public async Task<IEnumerable<ServiceRequestListItemDto>> GetAssignedAsync(string userId)
+        {
+            var requests = await _serviceRequestRepository.GetAssignedByTechnicianUserIdAsync(userId);
+            return requests.Select(ServiceRequestMapper.ToListItemDto);
+        }
     }
 }

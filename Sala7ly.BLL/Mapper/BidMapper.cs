@@ -58,5 +58,10 @@ namespace Sala7ly.BLL.Mapper
                 SubmittedAt = bid.SubmittedAt
             };
         }
+        public static List<BidListItemDto> ToListItemDtoList(IEnumerable<Bid> bids)
+        {
+            return bids.Select(ToListItemDto).ToList();
+        }
     }
+
 }

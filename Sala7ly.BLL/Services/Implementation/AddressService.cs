@@ -4,7 +4,6 @@ using System.Threading.Tasks;
 using Sala7ly.BLL.DTOs.AddressDTOs;
 using Sala7ly.BLL.Mapper;
 using Sala7ly.BLL.Services.Abstraction;
-using Sala7ly.DAL.Entities;
 using Sala7ly.DAL.Repositories.Abstraction;
 
 namespace Sala7ly.BLL.Services.Implementation

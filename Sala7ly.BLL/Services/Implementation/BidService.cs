@@ -189,5 +189,52 @@ namespace Sala7ly.BLL.Services.Implementation
 
             await _bidRepo.SaveChangesAsync();
         }
+        // Add to BidService.cs
+
+        // ── Update Bid ────────────────────────────────────────────
+        public async Task<BidDto> UpdateBidAsync(int bidId, UpdateBidDto dto, string technicianUserId)
+        {
+            var bid = await _bidRepo.GetByIdWithDetailsAsync(bidId);
+            if (bid == null)
+                throw new Exception("العرض غير موجود.");
+
+            // Verify ownership
+            if (bid.Technician.UserId != technicianUserId)
+                throw new UnauthorizedAccessException("غير مصرح لك بتعديل هذا العرض.");
+
+            // Domain method handles validation
+            bid.Update(dto.Price, dto.ProposalMessage, dto.EstimatedDurationMinutes);
+
+            await _bidRepo.SaveChangesAsync();
+
+            // Reload to get full navigation data
+            var updated = await _bidRepo.GetByIdWithDetailsAsync(bidId);
+            var bidDto = BidMapper.ToDto(updated!);
+
+            // Notify customer of updated bid via SignalR
+            await _biddingHub.Clients
+                .Group($"request_{bid.ServiceRequestId}")
+                .SendAsync("BidUpdated", bidDto);
+
+            return bidDto;
+        }
+
+        // ── Get Technician's Own Bids ─────────────────────────────
+        public async Task<List<BidListItemDto>> GetTechnicianBidsAsync(string technicianUserId)
+        {
+            var technician = await _technicianRepo.GetByUserIdAsync(technicianUserId);
+            if (technician == null)
+                throw new Exception("الفني غير موجود.");
+
+            var bids = await _bidRepo.GetByTechnicianIdAsync(technician.Id);
+            return BidMapper.ToListItemDtoList(bids);
+        }
+
+        // ── Get All Bids (Admin) ──────────────────────────────────
+        public async Task<List<BidListItemDto>> GetAllBidsAsync()
+        {
+            var bids = await _bidRepo.GetAllWithDetailsAsync();
+            return BidMapper.ToListItemDtoList(bids);
+        }
     }
 }

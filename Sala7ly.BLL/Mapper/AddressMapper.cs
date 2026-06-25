@@ -1,8 +1,8 @@
-﻿using Sala7ly.BLL.DTOs.AddressDTOs;
-using Sala7ly.DAL.Entities;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Sala7ly.BLL.DTOs.AddressDTOs;
+using Sala7ly.DAL.Entities;
 
 namespace Sala7ly.BLL.Mapper
 {

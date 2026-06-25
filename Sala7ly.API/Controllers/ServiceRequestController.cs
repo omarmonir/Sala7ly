@@ -67,6 +67,18 @@ namespace Sala7ly.API.Controllers
             return Ok(requests);
         }
 
+        [HttpGet("assigned")]
+        [Authorize(Roles = "Technician")]
+        public async Task<IActionResult> GetAssigned()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized(new { Message = "Technician not found" });
+
+            var requests = await _serviceRequestService.GetAssignedAsync(userId);
+            return Ok(requests);
+        }
+
         // GET api/requests/{id}
         [HttpGet("{id}")]
         [Authorize]

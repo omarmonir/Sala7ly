@@ -9,6 +9,7 @@ namespace Sala7ly.BLL.Services.Abstraction
         Task<IEnumerable<ServiceRequestListItemDto>> GetOpenRequestsAsync();
         Task<IEnumerable<ServiceRequestListItemDto>> GetMineAsync(string userId);
         Task<IEnumerable<ServiceRequestListItemDto>> GetAllAsync();
+        Task<IEnumerable<ServiceRequestListItemDto>> GetAssignedAsync(string userId);
         Task<bool> CreateAsync(string customerId, CreateServiceRequestDto dto);
         Task<bool> CompleteAsync(int id);
         Task<bool> UpdateAsync(int id, UpdateServiceRequestDto dto);

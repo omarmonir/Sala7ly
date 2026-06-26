@@ -238,16 +238,15 @@ namespace Sala7ly.BLL.Services.Implementation
         // Add to BidService.cs
 
         // ── Update Bid ────────────────────────────────────────────
-        public async Task<BidDto> UpdateBidAsync(int bidId, UpdateBidDto dto, string currentUserId)
+        public async Task<BidDto> UpdateBidAsync(int bidId, UpdateBidDto dto, string currentUserId, bool isAdmin)
         {
             var bid = await _bidRepo.GetByIdWithDetailsAsync(bidId);
             if (bid == null)
                 throw new Exception("العرض غير موجود.");
 
-            var isAdmin = false; // resolve from role — pass from controller
             var isTechnician = bid.Technician.UserId == currentUserId;
 
-            if (!isTechnician)
+            if (!isAdmin && !isTechnician)
                 throw new UnauthorizedAccessException("غير مصرح لك بتعديل هذا العرض.");
 
             // Update editable fields
@@ -286,10 +285,10 @@ namespace Sala7ly.BLL.Services.Implementation
         }
 
         // ── Get All Bids (Admin) ──────────────────────────────────
-        public async Task<List<BidListItemDto>> GetAllBidsAsync()
+        public async Task<List<BidDto>> GetAllBidsAsync()
         {
             var bids = await _bidRepo.GetAllWithDetailsAsync();
-            return BidMapper.ToListItemDtoList(bids);
+            return BidMapper.ToDtoList(bids);
         }
     }
 }

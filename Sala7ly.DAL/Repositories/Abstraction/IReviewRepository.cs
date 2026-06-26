@@ -10,6 +10,7 @@ namespace Sala7ly.DAL.Repositories.Abstraction
         Task<Review?> GetByRequestIdAsync(int requestId);
         Task<List<Review>> GetByRevieweeIdAsync(string revieweeId);
         Task<List<Review>> GetByReviewerIdAsync(string reviewerId);
+        Task<List<Review>> GetAllAsync();
         Task<bool> HasReviewForRequestAsync(int requestId, string reviewerId);
         Task AddAsync(Review review);
         void Update(Review review);

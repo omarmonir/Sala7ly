@@ -93,5 +93,11 @@ namespace Sala7ly.DAL.Entities
             Description = description;
             ScheduledAt = scheduledAt;
         }
+
+
+        public void MarkInProgress()
+        {
+            Status = Status.in_progress;
+        }
     }
 }

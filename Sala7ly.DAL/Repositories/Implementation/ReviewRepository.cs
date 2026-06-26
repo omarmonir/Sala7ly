@@ -16,7 +16,13 @@ namespace Sala7ly.DAL.Repositories.Implementation
         {
             _context = context;
         }
-
+        public Task<List<Review>> GetAllAsync()
+    => _context.Reviews
+        .Include(r => r.Reviewer)
+        .Include(r => r.Reviewee)
+        .Where(r => r.IsDeleted != true)
+        .OrderByDescending(r => r.CreatedAt)
+        .ToListAsync();
         public Task<Review?> GetByIdAsync(int id)
             => _context.Reviews
                 .Include(r => r.Reviewer)

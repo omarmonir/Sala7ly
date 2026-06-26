@@ -16,7 +16,11 @@ namespace Sala7ly.BLL.Services.Implementation
         private readonly IReviewRepository _reviewRepo;
         private readonly IServiceRequestRepository _requestRepo;
         private readonly INotificationService _notificationService;
-
+        public async Task<List<ReviewResponseDto>> GetAllAsync()
+        {
+            var reviews = await _reviewRepo.GetAllAsync();
+            return reviews.Select(ReviewMapper.ToResponseDto).ToList();
+        }
         public ReviewService(
             IReviewRepository reviewRepo,
             IServiceRequestRepository requestRepo,
@@ -44,7 +48,32 @@ namespace Sala7ly.BLL.Services.Implementation
             var reviews = await _reviewRepo.GetByRevieweeIdAsync(technicianUserId);
             return reviews.Select(ReviewMapper.ToResponseDto).ToList();
         }
+        public async Task<bool> ModerateAsync(string adminId, ModerateReviewDto dto)
+        {
+            var review = await _reviewRepo.GetByIdAsync(dto.ReviewId);
+            if (review is null)
+                return false;
 
+            review.Comment = dto.Comment;
+            review.ModerationNote = dto.ModerationNote;
+            review.IsModerated = true;
+            review.ModeratedAt = DateTime.UtcNow;
+
+            _reviewRepo.Update(review);
+            await _reviewRepo.SaveChangesAsync();
+            return true;
+        }
+
+        public async Task<bool> DeleteAsync(int id)
+        {
+            var review = await _reviewRepo.GetByIdAsync(id);
+            if (review is null)
+                return false;
+
+            _reviewRepo.Delete(review);   // soft delete (ToggaleStatus) from the repo
+            await _reviewRepo.SaveChangesAsync();
+            return true;
+        }
         public async Task<bool> CreateAsync(string reviewerUserId, CreateReviewDto dto)
         {
             // load the request with its parties to figure out who's being reviewed

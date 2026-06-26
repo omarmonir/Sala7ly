@@ -26,7 +26,32 @@ namespace Sala7ly.API.Controllers
             if (review is null) return NotFound();
             return Ok(review);
         }
+        // PUT api/review/moderate  → admin edits/moderates a review
+        [HttpPut("moderate")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Moderate([FromBody] ModerateReviewDto dto)
+        {
+            if (!ModelState.IsValid) return BadRequest(ModelState);
 
+            var adminId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (string.IsNullOrEmpty(adminId)) return Unauthorized();
+
+            var success = await _service.ModerateAsync(adminId, dto);
+            if (!success) return NotFound();
+
+            return Ok(new { message = "تم تعديل التقييم" });
+        }
+
+        // DELETE api/review/5  → admin deletes a review
+        [HttpDelete("{id:int}")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> Delete(int id)
+        {
+            var success = await _service.DeleteAsync(id);
+            if (!success) return NotFound();
+
+            return Ok(new { message = "تم حذف التقييم" });
+        }
         // GET api/review/request/5  → the review for a specific request
         [HttpGet("request/{requestId:int}")]
         [Authorize]
@@ -78,6 +103,14 @@ namespace Sala7ly.API.Controllers
                 return BadRequest(new { message = "تعذّر إضافة الرد. تأكد من أن هذا التقييم يخصّك." });
 
             return Ok(new { message = "تم إضافة الرد بنجاح" });
+        }
+        // GET api/review  → all reviews
+        [HttpGet]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> GetAll()
+        {
+            var reviews = await _service.GetAllAsync();
+            return Ok(reviews);
         }
     }
 }

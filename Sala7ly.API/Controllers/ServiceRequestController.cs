@@ -91,9 +91,9 @@ namespace Sala7ly.API.Controllers
             return Ok(request);
         }
 
-        // PUT api/requests/{id}/complete
+        // PUT api/requests/{id}/complete  → customer marks completed
         [HttpPut("{id}/complete")]
-        [Authorize]
+        [Authorize(Roles = "Customer")]   // ← was [Authorize]
         public async Task<IActionResult> Complete(int id)
         {
             var result = await _serviceRequestService.CompleteAsync(id);
@@ -117,7 +117,17 @@ namespace Sala7ly.API.Controllers
 
             return Ok(new { Message = "Request updated successfully" });
         }
+        // PUT api/requests/{id}/start  → technician marks work started
+        [HttpPut("{id}/start")]
+        [Authorize(Roles = "Technician")]
+        public async Task<IActionResult> Start(int id)
+        {
+            var result = await _serviceRequestService.StartProgressAsync(id);
+            if (!result)
+                return NotFound(new { Message = "Request not found" });
 
+            return Ok(new { Message = "Work started" });
+        }
         // DELETE api/requests/{id} - Admin only
         [HttpDelete("{id}")]
         [Authorize(Roles = "Admin")]

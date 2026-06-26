@@ -5,5 +5,6 @@
         public decimal Price { get; set; }
         public string ProposalMessage { get; set; }
         public int EstimatedDurationMinutes { get; set; }
+        public string? Status { get; set; }
     }
 }

@@ -29,6 +29,8 @@ namespace Sala7ly.DAL.Repositories.Implementation
                 .Include(b => b.ServiceRequest)
                     .ThenInclude(r => r.Profile)
                         .ThenInclude(c => c.User)
+                .Include(b => b.ServiceRequest)
+                    .ThenInclude(r => r.Category)
                 .Include(b => b.Technician)
                     .ThenInclude(t => t.User)
                 .FirstOrDefaultAsync(b => b.Id == bidId);

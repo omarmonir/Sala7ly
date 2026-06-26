@@ -84,6 +84,16 @@ namespace Sala7ly.DAL.Entities
             ProposalMessage = proposalMessage;
             EstimatedDurationMinutes = estimatedDurationMinutes;
         }
+        public void ChangeStatus(BidStatus newStatus)
+        {
+            if (Status == BidStatus.expired)
+                throw new InvalidOperationException("لا يمكن تغيير حالة عرض منتهي الصلاحية.");
+
+            Status = newStatus;
+            RespondedAt = newStatus is BidStatus.accepted or BidStatus.rejected
+                ? DateTime.UtcNow
+                : RespondedAt;
+        }
     }
 
 

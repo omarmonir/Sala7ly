@@ -18,13 +18,8 @@ namespace Sala7ly.BLL.Mapper
             };
 
         public static Address ToEntity(CreateAddressDto dto)
-            => new Address(
-                dto.CustomerId,
-                dto.Street,
-                dto.City,
-                dto.District
-                );
-                
+    => new Address(dto.CustomerId, dto.Title, dto.Street, dto.City, dto.District);
+
 
     }
 }

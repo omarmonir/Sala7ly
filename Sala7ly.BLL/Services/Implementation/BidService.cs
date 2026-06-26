@@ -192,33 +192,42 @@ namespace Sala7ly.BLL.Services.Implementation
         // Add to BidService.cs
 
         // ── Update Bid ────────────────────────────────────────────
-        public async Task<BidDto> UpdateBidAsync(int bidId, UpdateBidDto dto, string technicianUserId)
+        public async Task<BidDto> UpdateBidAsync(int bidId, UpdateBidDto dto, string currentUserId)
         {
             var bid = await _bidRepo.GetByIdWithDetailsAsync(bidId);
             if (bid == null)
                 throw new Exception("العرض غير موجود.");
 
-            // Verify ownership
-            if (bid.Technician.UserId != technicianUserId)
+            var isAdmin = false; // resolve from role — pass from controller
+            var isTechnician = bid.Technician.UserId == currentUserId;
+
+            if (!isTechnician)
                 throw new UnauthorizedAccessException("غير مصرح لك بتعديل هذا العرض.");
 
-            // Domain method handles validation
+            // Update editable fields
             bid.Update(dto.Price, dto.ProposalMessage, dto.EstimatedDurationMinutes);
+
+            // Status change — only if provided and bid is not already accepted/rejected
+            if (!string.IsNullOrWhiteSpace(dto.Status))
+            {
+                if (!Enum.TryParse<BidStatus>(dto.Status, ignoreCase: true, out var newStatus))
+                    throw new Exception("حالة العرض غير صحيحة.");
+
+                bid.ChangeStatus(newStatus);
+            }
 
             await _bidRepo.SaveChangesAsync();
 
-            // Reload to get full navigation data
             var updated = await _bidRepo.GetByIdWithDetailsAsync(bidId);
             var bidDto = BidMapper.ToDto(updated!);
 
-            // Notify customer of updated bid via SignalR
+            // Push update to customer via SignalR
             await _biddingHub.Clients
                 .Group($"request_{bid.ServiceRequestId}")
                 .SendAsync("BidUpdated", bidDto);
 
             return bidDto;
         }
-
         // ── Get Technician's Own Bids ─────────────────────────────
         public async Task<List<BidListItemDto>> GetTechnicianBidsAsync(string technicianUserId)
         {

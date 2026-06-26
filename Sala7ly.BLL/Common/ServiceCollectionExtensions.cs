@@ -41,7 +41,7 @@ namespace Sala7ly.BLL.Common
             services.AddScoped<IServiceRequestService, ServiceRequestService>();
             services.AddScoped<IChatService, ChatService>();
             services.AddScoped<IBidService, BidService>();
-
+            services.AddScoped<IRequestRefinerService, RequestRefinerService>();
             services.AddCors(options =>
             {
                 options.AddPolicy("AllowAll", policy =>
@@ -150,6 +150,7 @@ namespace Sala7ly.BLL.Common
                     return Task.CompletedTask;
                 };
             });
+
             return services;
 
         }

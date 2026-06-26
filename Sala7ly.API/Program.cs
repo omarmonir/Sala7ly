@@ -46,6 +46,12 @@ StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
 builder.Services.AddDataAccessLayer(builder.Configuration);
 builder.Services.AddBusinessLogicLayer(builder.Configuration);
 builder.Services.AddScoped<IFilePathProvider, WebHostEnvironmentPathProvider>();
+builder.Services.AddHttpClient("GitHubModels", client =>
+{
+    client.DefaultRequestHeaders.Add("Authorization",
+        $"Bearer {builder.Configuration["GitHubModels:Token"]}");
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+});
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())

@@ -16,7 +16,7 @@ namespace Sala7ly.DAL.Common
             IConfiguration configuration)
         {
             services.AddDbContext<AppDbContext>(options =>
-                options.UseSqlServer(configuration.GetConnectionString("ServerConnection")));
+                options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
             AppContext.SetSwitch("Switch.System.Net.Mail.MailMessage.AllowUnicode", true);
             services.AddScoped<INotificationRepository, NotificationRepository>();
             services.AddScoped<ITechnicianProfileRepository, TechnicianProfileRepository>();
@@ -25,6 +25,7 @@ namespace Sala7ly.DAL.Common
             services.AddScoped<IServiceCategoryRepository, ServiceCategoryRepository>();
             services.AddScoped<ICustomerRepository, CustomerRepository>();
             services.AddScoped<IAddressRepository, AddressRepository>();
+            services.AddScoped<IReviewRepository, ReviewRepository>();
             services.AddScoped<IServiceRequestRepository, ServiceRequestRepository>();
             services.AddScoped<ITechnicianVerificationRepository, TechnicianVerificationRepository>();
             services.AddScoped<IChatMessageRepository, ChatMessageRepository>();

@@ -50,7 +50,7 @@ namespace Sala7ly.API.Controllers
 
         // ── GET /api/requests/{requestId}/bids ───────────────
         [HttpGet("requests/{requestId}/bids")]
-        public async Task<IActionResult> GetBids(int requestId)
+        public async Task<IActionResult> GetBidsByRequest(int requestId)
         {
             try
             {
@@ -103,6 +103,98 @@ namespace Sala7ly.API.Controllers
             }
         }
 
+        // ── GET /api/bids/my-bids ─────────────────────────────
+        [Authorize(Roles = "Technician")]
+        [HttpGet("bids/my-bids")]
+        public async Task<IActionResult> GetMyBids()
+        {
+            try
+            {
+                var result = await _bidService.GetTechnicianBidsAsync(CurrentUserId);
+
+                return Ok(new ApiResponse<List<BidListItemDto>>
+                {
+                    Success = true,
+                    Data = result
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new ApiResponse<List<BidListItemDto>>
+                {
+                    Success = false,
+                    Message = ex.Message
+                });
+            }
+        }
+
+        // ── GET /api/admin/bids ───────────────────────────────
+        [Authorize(Roles = "Admin")]
+        [HttpGet("admin/bids")]
+        public async Task<IActionResult> GetAllBids()
+        {
+            try
+            {
+                var result = await _bidService.GetAllBidsAsync();
+
+                return Ok(new ApiResponse<List<BidListItemDto>>
+                {
+                    Success = true,
+                    Data = result
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new ApiResponse<List<BidListItemDto>>
+                {
+                    Success = false,
+                    Message = ex.Message
+                });
+            }
+        }
+
+        // ── PUT /api/bids/{bidId} ─────────────────────────────
+        [Authorize(Roles = "Technician")]
+        [HttpPut("bids/{bidId}")]
+        public async Task<IActionResult> UpdateBid(int bidId, [FromBody] UpdateBidDto dto)
+        {
+            try
+            {
+                var result = await _bidService.UpdateBidAsync(bidId, dto, CurrentUserId);
+
+                return Ok(new ApiResponse<BidDto>
+                {
+                    Success = true,
+                    Message = "تم تعديل العرض بنجاح",
+                    Data = result
+                });
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(new ApiResponse<BidDto>
+                {
+                    Success = false,
+                    Message = ex.Message
+                });
+            }
+            catch (InvalidOperationException ex)
+            {
+                return BadRequest(new ApiResponse<BidDto>
+                {
+                    Success = false,
+                    Message = ex.Message
+                });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new ApiResponse<BidDto>
+                {
+                    Success = false,
+                    Message = ex.Message
+                });
+            }
+        }
+
         // ── PUT /api/bids/{bidId}/accept ──────────────────────
         [Authorize(Roles = "Customer")]
         [HttpPut("bids/{bidId}/accept")]
@@ -118,12 +210,12 @@ namespace Sala7ly.API.Controllers
                     Message = "تم قبول العرض بنجاح"
                 });
             }
-            catch (UnauthorizedAccessException)
+            catch (UnauthorizedAccessException ex)
             {
                 return Unauthorized(new ApiResponse<string>
                 {
                     Success = false,
-                    Message = "غير مصرح لك بهذا الإجراء"
+                    Message = ex.Message
                 });
             }
             catch (Exception ex)
@@ -151,12 +243,12 @@ namespace Sala7ly.API.Controllers
                     Message = "تم رفض العرض"
                 });
             }
-            catch (UnauthorizedAccessException)
+            catch (UnauthorizedAccessException ex)
             {
                 return Unauthorized(new ApiResponse<string>
                 {
                     Success = false,
-                    Message = "غير مصرح لك بهذا الإجراء"
+                    Message = ex.Message
                 });
             }
             catch (Exception ex)
@@ -184,12 +276,12 @@ namespace Sala7ly.API.Controllers
                     Message = "تم سحب العرض بنجاح"
                 });
             }
-            catch (UnauthorizedAccessException)
+            catch (UnauthorizedAccessException ex)
             {
                 return Unauthorized(new ApiResponse<string>
                 {
                     Success = false,
-                    Message = "غير مصرح لك بهذا الإجراء"
+                    Message = ex.Message
                 });
             }
             catch (Exception ex)

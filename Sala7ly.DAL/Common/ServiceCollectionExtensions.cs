@@ -30,6 +30,9 @@ namespace Sala7ly.DAL.Common
             services.AddScoped<ITechnicianVerificationRepository, TechnicianVerificationRepository>();
             services.AddScoped<IChatMessageRepository, ChatMessageRepository>();
             services.AddScoped<IBidRepository, BidRepository>();
+            services.AddScoped<IWalletRepository, WalletRepository>();
+            services.AddScoped<IWalletTransactionRepository, WalletTransactionRepository>();
+            services.AddScoped<IEscrowRepository, EscrowRepository>();
             return services;    
         }
     }

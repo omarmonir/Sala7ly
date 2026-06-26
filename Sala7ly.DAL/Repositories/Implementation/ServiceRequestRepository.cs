@@ -25,6 +25,7 @@ namespace Sala7ly.DAL.Repositories.Implementation
                 .Where(r => r.CustomerId == customerId && r.IsDeleted != true)
                 .OrderByDescending(r => r.CreatedOn)
                 .ToListAsync();
+       
 
         public async Task<IEnumerable<ServiceRequest>> GetOpenRequestsAsync()
             => await _context.ServiceRequests
@@ -49,6 +50,7 @@ namespace Sala7ly.DAL.Repositories.Implementation
                 .Include(r => r.SelectedBid)
                     .ThenInclude(b => b.Technician)
                         .ThenInclude(t => t.User)
+                .Include(r =>r.EscrowTransaction)
                 .FirstOrDefaultAsync(r => r.Id == requestId && r.IsDeleted != true);
 
         public async Task<IEnumerable<ServiceRequest>> GetAssignedByTechnicianUserIdAsync(string userId)

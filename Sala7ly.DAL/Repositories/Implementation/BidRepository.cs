@@ -10,12 +10,27 @@ namespace Sala7ly.DAL.Repositories.Implementation
     {
         public BidRepository(AppDbContext context) : base(context) { }
 
+        public async Task<List<Bid>> GetAllWithDetailsAsync()
+        {
+            return await _context.Bids
+                .Include(b => b.ServiceRequest)
+                    .ThenInclude(r => r.Profile)
+                        .ThenInclude(c => c.User)
+                .Include(b => b.ServiceRequest)
+                    .ThenInclude(r => r.Category)
+                .Include(b => b.Technician)
+                    .ThenInclude(t => t.User)
+                .OrderByDescending(b => b.SubmittedAt)
+                .ToListAsync();
+        }
         public async Task<Bid?> GetByIdWithDetailsAsync(int bidId)
         {
             return await _context.Bids
                 .Include(b => b.ServiceRequest)
                     .ThenInclude(r => r.Profile)
                         .ThenInclude(c => c.User)
+                .Include(b => b.ServiceRequest)
+                    .ThenInclude(r => r.Category)
                 .Include(b => b.Technician)
                     .ThenInclude(t => t.User)
                 .FirstOrDefaultAsync(b => b.Id == bidId);
@@ -55,11 +70,14 @@ namespace Sala7ly.DAL.Repositories.Implementation
         public async Task<List<Bid>> GetByTechnicianIdAsync(int technicianId)
         {
             return await _context.Bids
-                .Where(b => b.TechnicianId == technicianId)
-                .Include(b => b.ServiceRequest)
-                    .ThenInclude(r => r.Category)
-                .OrderByDescending(b => b.SubmittedAt)
-                .ToListAsync();
+        .Where(b => b.TechnicianId == technicianId)
+        .Include(b => b.ServiceRequest)
+            .ThenInclude(r => r.Category)
+        .Include(b => b.ServiceRequest)
+            .ThenInclude(r => r.Profile)
+                .ThenInclude(c => c.User)
+        .OrderByDescending(b => b.SubmittedAt)
+        .ToListAsync();
         }
 
         public async Task<int> CountByRequestAsync(int requestId)
@@ -83,6 +101,16 @@ namespace Sala7ly.DAL.Repositories.Implementation
                 .AnyAsync(b => b.ServiceRequestId == requestId
                             && b.TechnicianId == technicianId
                             && b.Status != BidStatus.withdrawn);
+        }
+        public async Task<List<decimal>> GetAcceptedPricesByCategoryAsync(int categoryId, int limit)
+        {
+            return await _context.Bids
+                .Where(b => b.Status == BidStatus.accepted
+                         && b.ServiceRequest.CategoryId == categoryId)
+                .OrderByDescending(b => b.SubmittedAt)
+                .Take(limit)
+                .Select(b => b.Price)
+                .ToListAsync();
         }
     }
 }

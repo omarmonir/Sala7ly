@@ -235,5 +235,61 @@ namespace Sala7ly.BLL.Services.Implementation
 
             await _bidRepo.SaveChangesAsync();
         }
+        // Add to BidService.cs
+
+        // ── Update Bid ────────────────────────────────────────────
+        public async Task<BidDto> UpdateBidAsync(int bidId, UpdateBidDto dto, string currentUserId)
+        {
+            var bid = await _bidRepo.GetByIdWithDetailsAsync(bidId);
+            if (bid == null)
+                throw new Exception("العرض غير موجود.");
+
+            var isAdmin = false; // resolve from role — pass from controller
+            var isTechnician = bid.Technician.UserId == currentUserId;
+
+            if (!isTechnician)
+                throw new UnauthorizedAccessException("غير مصرح لك بتعديل هذا العرض.");
+
+            // Update editable fields
+            bid.Update(dto.Price, dto.ProposalMessage, dto.EstimatedDurationMinutes);
+
+            // Status change — only if provided and bid is not already accepted/rejected
+            if (!string.IsNullOrWhiteSpace(dto.Status))
+            {
+                if (!Enum.TryParse<BidStatus>(dto.Status, ignoreCase: true, out var newStatus))
+                    throw new Exception("حالة العرض غير صحيحة.");
+
+                bid.ChangeStatus(newStatus);
+            }
+
+            await _bidRepo.SaveChangesAsync();
+
+            var updated = await _bidRepo.GetByIdWithDetailsAsync(bidId);
+            var bidDto = BidMapper.ToDto(updated!);
+
+            // Push update to customer via SignalR
+            await _biddingHub.Clients
+                .Group($"request_{bid.ServiceRequestId}")
+                .SendAsync("BidUpdated", bidDto);
+
+            return bidDto;
+        }
+        // ── Get Technician's Own Bids ─────────────────────────────
+        public async Task<List<BidListItemDto>> GetTechnicianBidsAsync(string technicianUserId)
+        {
+            var technician = await _technicianRepo.GetByUserIdAsync(technicianUserId);
+            if (technician == null)
+                throw new Exception("الفني غير موجود.");
+
+            var bids = await _bidRepo.GetByTechnicianIdAsync(technician.Id);
+            return BidMapper.ToListItemDtoList(bids);
+        }
+
+        // ── Get All Bids (Admin) ──────────────────────────────────
+        public async Task<List<BidListItemDto>> GetAllBidsAsync()
+        {
+            var bids = await _bidRepo.GetAllWithDetailsAsync();
+            return BidMapper.ToListItemDtoList(bids);
+        }
     }
 }

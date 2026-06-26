@@ -9,8 +9,10 @@ namespace Sala7ly.DAL.Repositories.Abstraction
         Task<List<Bid>> GetByRequestIdAsync(int requestId);
         Task<List<Bid>> GetPendingByRequestAsync(int requestId, int excludeBidId);
         Task<List<Bid>> GetByTechnicianIdAsync(int technicianId);
+        Task<List<Bid>> GetAllWithDetailsAsync();
         Task<int> CountByRequestAsync(int requestId);
         Task<List<Bid>> GetExpiredBidsAsync();
+        Task<List<decimal>> GetAcceptedPricesByCategoryAsync(int categoryId, int limit);
         Task<bool> HasTechnicianBidAsync(int requestId, int technicianId);
     }
 }

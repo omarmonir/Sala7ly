@@ -4,11 +4,15 @@
     {
         public int Id { get; set; }
         public int ServiceRequestId { get; set; }
+        public string? ServiceRequestTitle { get; set; }
+
         public int TechnicianId { get; set; }
         public string? TechnicianName { get; set; }
         public string? TechnicianAvatar { get; set; }
         public double TechnicianRating { get; set; }
         public int TechnicianJobs { get; set; }
+        public string? CustomerName { get; set; }
+        public string? CustomerAvatar { get; set; }
         public decimal Price { get; set; }
         public int EstimatedDurationMinutes { get; set; }
         public string ProposalMessage { get; set; }

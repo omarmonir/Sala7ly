@@ -34,6 +34,8 @@ namespace Sala7ly.BLL.Common
             services.AddScoped<IReviewService, ReviewService>();          
            
 
+            services.AddScoped<IWalletService, WalletService>();
+            services.AddScoped<IPaymentService, PaymentService>();
 
             services.AddScoped<IFileService, FileService>();
             services.AddScoped<IServiceRequestService, ServiceRequestService>();

@@ -1,8 +1,8 @@
-﻿using Sala7ly.BLL.DTOs.AddressDTOs;
-using Sala7ly.DAL.Entities;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Sala7ly.BLL.DTOs.AddressDTOs;
+using Sala7ly.DAL.Entities;
 
 namespace Sala7ly.BLL.Mapper
 {
@@ -18,13 +18,8 @@ namespace Sala7ly.BLL.Mapper
             };
 
         public static Address ToEntity(CreateAddressDto dto)
-            => new Address(
-                dto.CustomerId,
-                dto.Street,
-                dto.City,
-                dto.District
-                );
-                
+    => new Address(dto.CustomerId, dto.Title, dto.Street, dto.City, dto.District);
+
 
     }
 }

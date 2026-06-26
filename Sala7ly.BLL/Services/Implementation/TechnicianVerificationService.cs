@@ -131,8 +131,14 @@ namespace Sala7ly.BLL.Services.Implementation
             verification.ReviewedByAdminId = adminId;
             verification.ReviewedAt = DateTime.UtcNow;
 
+            var tech = await _technicianRepository.GetByIdAsync(verification.TechnicianId);
+
+            tech.IsApproved = true;
+
             _repository.Update(verification);
+            _technicianRepository.Update(tech);
             await _repository.SaveChangesAsync();
+
             return true;
         }
 

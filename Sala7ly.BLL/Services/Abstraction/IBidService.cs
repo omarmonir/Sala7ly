@@ -7,7 +7,7 @@ namespace Sala7ly.BLL.Services.Abstraction
         Task<BidDto> SubmitBidAsync(int requestId, SubmitBidDto dto, string technicianUserId);
         Task AcceptBidAsync(int bidId, string customerUserId);
         Task RejectBidAsync(int bidId, string customerUserId);
-        Task WithdrawBidAsync(int bidId, string technicianUserId);
+        Task WithdrawBidAsync(int bidId, string technicianUserId, bool isAdmin = false);
         Task<List<BidDto>> GetBidsByRequestAsync(int requestId);
         Task<BidDto?> GetBidByIdAsync(int bidId);
         Task ExpireOldBidsAsync();

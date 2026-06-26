@@ -1,6 +1,4 @@
-﻿using Sala7ly.DAL.Enums;
-
-namespace Sala7ly.BLL.DTOs.ServiceRequestDTOs
+﻿namespace Sala7ly.BLL.DTOs.ServiceRequestDTOs
 {
     public class ServiceRequestDetailsDto
     {
@@ -22,6 +20,9 @@ namespace Sala7ly.BLL.DTOs.ServiceRequestDTOs
         public DateTime? CreatedOn { get; set; }
         public string? CustomerName { get; set; }
         public string? CategoryName { get; set; }
+
+        // FIX: was only Street ("s") — now returns "Street, District, City"
+        // built by the mapper's FormatAddress() helper from the real Address entity.
         public string? Address { get; set; }
     }
 }

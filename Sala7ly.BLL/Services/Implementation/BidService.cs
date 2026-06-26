@@ -175,14 +175,14 @@ namespace Sala7ly.BLL.Services.Implementation
         }
 
         // ── Withdraw Bid ──────────────────────────────────────
-        public async Task WithdrawBidAsync(int bidId, string technicianUserId)
+        public async Task WithdrawBidAsync(int bidId, string technicianUserId, bool isAdmin = false)
         {
             var bid = await _bidRepo.GetByIdWithDetailsAsync(bidId);
             if (bid == null)
                 throw new Exception("Bid not found.");
 
-            if (bid.Technician.UserId != technicianUserId)
-                throw new Exception("Unauthorized.");
+            if (!isAdmin && bid.Technician.UserId != technicianUserId)
+                throw new UnauthorizedAccessException("غير مصرح لك بسحب هذا العرض.");
 
             bid.Withdraw();
             await _bidRepo.SaveChangesAsync();

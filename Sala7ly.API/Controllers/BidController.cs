@@ -269,7 +269,8 @@ namespace Sala7ly.API.Controllers
         {
             try
             {
-                await _bidService.WithdrawBidAsync(bidId, CurrentUserId);
+                var isAdmin = User.IsInRole("Admin");
+                await _bidService.WithdrawBidAsync(bidId, CurrentUserId, isAdmin);
 
                 return Ok(new ApiResponse<string>
                 {

@@ -137,7 +137,7 @@ namespace Sala7ly.API.Controllers
             {
                 var result = await _bidService.GetAllBidsAsync();
 
-                return Ok(new ApiResponse<List<BidListItemDto>>
+                return Ok(new ApiResponse<List<BidDto>>
                 {
                     Success = true,
                     Data = result
@@ -145,7 +145,7 @@ namespace Sala7ly.API.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(new ApiResponse<List<BidListItemDto>>
+                return BadRequest(new ApiResponse<List<BidDto>>
                 {
                     Success = false,
                     Message = ex.Message
@@ -154,13 +154,14 @@ namespace Sala7ly.API.Controllers
         }
 
         // ── PUT /api/bids/{bidId} ─────────────────────────────
-        [Authorize(Roles = "Technician")]
+        [Authorize(Roles = "Technician,Admin")]
         [HttpPut("bids/{bidId}")]
         public async Task<IActionResult> UpdateBid(int bidId, [FromBody] UpdateBidDto dto)
         {
             try
             {
-                var result = await _bidService.UpdateBidAsync(bidId, dto, CurrentUserId);
+                var isAdmin = User.IsInRole("Admin");
+                var result = await _bidService.UpdateBidAsync(bidId, dto, CurrentUserId, isAdmin);
 
                 return Ok(new ApiResponse<BidDto>
                 {
@@ -262,7 +263,7 @@ namespace Sala7ly.API.Controllers
         }
 
         // ── DELETE /api/bids/{bidId} ──────────────────────────
-        [Authorize(Roles = "Technician")]
+        [Authorize(Roles = "Technician,Admin")]
         [HttpDelete("bids/{bidId}")]
         public async Task<IActionResult> WithdrawBid(int bidId)
         {

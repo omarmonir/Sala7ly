@@ -39,6 +39,9 @@ namespace Sala7ly.DAL.Entities
         public int AddressId { get; private set; }
         public int CategoryId { get; private set; }
         public int? SelectedBidId { get; private set; }
+        public string? AiSummary { get; private set; }
+        public int? AiSuggestedCategoryId { get; private set; }
+        public string? AiRefinementJson { get; private set; }
 
         // navigation
         public CustomerProfile Profile { get; private set; }
@@ -98,6 +101,14 @@ namespace Sala7ly.DAL.Entities
         public void MarkInProgress()
         {
             Status = Status.in_progress;
+        }
+
+
+        public void SetAiRefinement(string summary, int? suggestedCategoryId, string refinementJson)
+        {
+            AiSummary = summary;
+            AiSuggestedCategoryId = suggestedCategoryId;
+            AiRefinementJson = refinementJson;
         }
     }
 }

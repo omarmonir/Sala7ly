@@ -4,12 +4,12 @@ using Sala7ly.BLL.DTOs.ServiceRequestDTOs;
 using Sala7ly.BLL.Mapper;
 using Sala7ly.BLL.Services.Abstraction;
 using Sala7ly.DAL.Entities;
+using Sala7ly.DAL.Enums;
 using Sala7ly.DAL.Repositories.Abstraction;
 using Sala7ly.DAL.Repositories.Implementation;
 using System;
 using System.Collections.Generic;
 using System.Text;
-using static System.Runtime.InteropServices.JavaScript.JSType;
 
 namespace Sala7ly.BLL.Services.Implementation
 {
@@ -19,14 +19,17 @@ namespace Sala7ly.BLL.Services.Implementation
         private readonly ICustomerRepository _customerRepo;
         private readonly UserManager<User> _userManager;
         private readonly IFileService _fileService;
+        private readonly INotificationService _notificationService;
 
         public CustomerService(ICustomerRepository customerRepo,
                               UserManager<User> userManager,
-                              IFileService fileService)
+                              IFileService fileService,
+                              INotificationService notificationService)
         {
             _customerRepo = customerRepo;
             _userManager = userManager;
             _fileService = fileService;
+            _notificationService = notificationService;
         }
 
         // Queries 
@@ -48,8 +51,6 @@ namespace Sala7ly.BLL.Services.Implementation
             return profiles.Select(CustomerMapper.ToListItemDto);
         }
 
-
-
         public async Task<CustomerProfileDetailsDto?> GetMineAsync(string userId)
         {
             var profile = await _customerRepo.GetByUserIdAsync(userId);
@@ -59,8 +60,6 @@ namespace Sala7ly.BLL.Services.Implementation
 
             return CustomerMapper.ToDetailsDto(profile);
         }
-
-
 
         // ── Commands
 
@@ -75,13 +74,11 @@ namespace Sala7ly.BLL.Services.Implementation
             if (dto.Image is not null)
                 imageUrl = await _fileService.SaveFileAsync(dto.Image, "customers");
 
-
             // 2 — map dto → entities
             var user = CustomerMapper.ToUserEntity(dto);
             if (imageUrl is not null)
                 user.SetImageUrl(imageUrl);
             var profile = CustomerMapper.ToProfileEntity();
-
 
             // 3 — create user via Identity
             var result = await _userManager.CreateAsync(user, dto.Password);
@@ -91,8 +88,6 @@ namespace Sala7ly.BLL.Services.Implementation
                     await _fileService.DeleteFileAsync(imageUrl);
                 return false;
             }
-
-
 
             // 4 — link profile and save
             profile.UserId = user.Id;
@@ -111,9 +106,16 @@ namespace Sala7ly.BLL.Services.Implementation
             }
             await _userManager.AddToRoleAsync(user, "Customer");
 
+            // 6 — send a welcome notification
+            await _notificationService.NotifyUserAsync(
+                userId: user.Id,
+                type: NotificationType.system,
+                title: "مرحباً بك في صلّحلي 👋",
+                body: "سعداء بانضمامك! يمكنك الآن إنشاء طلب جديد والعثور على أفضل الفنيين لخدمتك.",
+                deepLink: null);
+
             return true;
         }
-
 
         public async Task<bool> UpdateAsync(int id, CustomerProfileUpdateDto dto)
         {
@@ -145,6 +147,7 @@ namespace Sala7ly.BLL.Services.Implementation
 
             return true;
         }
+
         public async Task<bool> DeleteAsync(int id, string deletedBy)
         {
             // 1 — get profile with user included
@@ -165,8 +168,6 @@ namespace Sala7ly.BLL.Services.Implementation
 
             return true;
         }
-
-
 
     }
 

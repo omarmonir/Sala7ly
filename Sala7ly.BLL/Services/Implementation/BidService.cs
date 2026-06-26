@@ -14,17 +14,20 @@ namespace Sala7ly.BLL.Services.Implementation
         private readonly IServiceRequestRepository _requestRepo;
         private readonly ITechnicianProfileRepository _technicianRepo;
         private readonly IHubContext<BiddingHub> _biddingHub;
+        private readonly INotificationService _notificationService;
 
         public BidService(
             IBidRepository bidRepo,
             IServiceRequestRepository requestRepo,
             ITechnicianProfileRepository technicianRepo,
-            IHubContext<BiddingHub> biddingHub)
+            IHubContext<BiddingHub> biddingHub,
+            INotificationService notificationService)
         {
             _bidRepo = bidRepo;
             _requestRepo = requestRepo;
             _technicianRepo = technicianRepo;
             _biddingHub = biddingHub;
+            _notificationService = notificationService;
         }
 
         // ── Submit Bid ────────────────────────────────────────
@@ -54,6 +57,7 @@ namespace Sala7ly.BLL.Services.Implementation
             var saved = await _bidRepo.GetByIdWithDetailsAsync(bid.Id);
 
             var bidDto = BidMapper.ToDto(saved!);
+
             // 6. Push to customer via SignalR
             await _biddingHub.Clients
                 .Group($"request-{requestId}")
@@ -65,7 +69,14 @@ namespace Sala7ly.BLL.Services.Implementation
                 .Group($"request-{requestId}")
                 .SendAsync("BidCountUpdated", new { requestId, count });
 
-            
+            // 8. Persistent notification to the customer who owns the request
+            await _notificationService.NotifyUserAsync(
+                userId: request.Profile.UserId,
+                type: NotificationType.new_bid,
+                title: "عرض جديد على طلبك",
+                body: "قام أحد الفنيين بتقديم عرض على طلبك. اضغط لعرض التفاصيل.",
+                actorId: technicianUserId,
+                metadata: $"{{\"requestId\": {requestId}, \"bidId\": {bid.Id}}}");
 
             return bidDto;
         }
@@ -114,7 +125,26 @@ namespace Sala7ly.BLL.Services.Implementation
                     requestId = bid.ServiceRequestId
                 });
 
-          
+            // 8. Persistent notification to the accepted technician
+            await _notificationService.NotifyUserAsync(
+                userId: bid.Technician.UserId,
+                type: NotificationType.bid_accepted,
+                title: "تم قبول عرضك 🎉",
+                body: "هنّئنا! تم قبول عرضك على أحد الطلبات. اضغط لعرض التفاصيل.",
+                actorId: customerUserId,
+                metadata: $"{{\"requestId\": {bid.ServiceRequestId}, \"bidId\": {bidId}}}");
+
+            // 9. Persistent notification to each rejected technician
+            foreach (var other in otherBids)
+            {
+                await _notificationService.NotifyUserAsync(
+                    userId: other.Technician.UserId,
+                    type: NotificationType.bid_accepted,
+                    title: "لم يتم اختيار عرضك",
+                    body: "تم قبول عرض فني آخر على هذا الطلب. شكراً لمشاركتك.",
+                    actorId: customerUserId,
+                    metadata: $"{{\"requestId\": {bid.ServiceRequestId}, \"bidId\": {other.Id}}}");
+            }
         }
 
         // ── Reject Bid ────────────────────────────────────────
@@ -134,7 +164,14 @@ namespace Sala7ly.BLL.Services.Implementation
                 .User(bid.Technician.UserId)
                 .SendAsync("BidRejected", new { bidId });
 
-           
+            // Persistent notification to the rejected technician
+            await _notificationService.NotifyUserAsync(
+                userId: bid.Technician.UserId,
+                type: NotificationType.new_bid,
+                title: "تم رفض عرضك",
+                body: "نأسف، تم رفض عرضك على أحد الطلبات.",
+                actorId: customerUserId,
+                metadata: $"{{\"requestId\": {bid.ServiceRequestId}, \"bidId\": {bidId}}}");
         }
 
         // ── Withdraw Bid ──────────────────────────────────────
@@ -163,6 +200,15 @@ namespace Sala7ly.BLL.Services.Implementation
                     requestId = bid.ServiceRequestId,
                     count
                 });
+
+            // Persistent notification to the customer who owns the request
+            await _notificationService.NotifyUserAsync(
+                userId: bid.ServiceRequest.Profile.UserId,
+                type: NotificationType.new_bid,
+                title: "تم سحب عرض",
+                body: "قام أحد الفنيين بسحب عرضه على طلبك.",
+                actorId: technicianUserId,
+                metadata: $"{{\"requestId\": {bid.ServiceRequestId}, \"bidId\": {bidId}}}");
         }
 
         // ── Get Bids by Request ───────────────────────────────

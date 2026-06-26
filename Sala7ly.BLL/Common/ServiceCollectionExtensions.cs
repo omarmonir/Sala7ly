@@ -31,6 +31,9 @@ namespace Sala7ly.BLL.Common
             services.AddScoped<ITechnicianVerificationService, TechnicianVerificationService>();
             services.AddScoped<IAddressService, AddressService>();
             services.AddScoped<INotificationService, NotificationService>();
+            services.AddScoped<IReviewService, ReviewService>();          
+           
+
             services.AddScoped<IWalletService, WalletService>();
             services.AddScoped<IPaymentService, PaymentService>();
 

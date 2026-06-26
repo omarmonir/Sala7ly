@@ -7,6 +7,7 @@ using Sala7ly.BLL.Services.Abstraction;
 using Sala7ly.BLL.Services.Implementation;
 using Sala7ly.DAL.Common;
 using Sala7ly.DAL.Entities;
+using Stripe;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,6 +41,7 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
+StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
 
 builder.Services.AddDataAccessLayer(builder.Configuration);
 builder.Services.AddBusinessLogicLayer(builder.Configuration);

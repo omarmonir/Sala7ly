@@ -69,6 +69,31 @@ namespace Sala7ly.DAL.Entities
             if (Status == BidStatus.pending)
                 Status = BidStatus.expired;
         }
+        public void Update(decimal price, string proposalMessage, int estimatedDurationMinutes)
+        {
+            if (Status != BidStatus.pending)
+                throw new InvalidOperationException("يمكن تعديل العروض المعلقة فقط.");
+
+            if (price <= 0)
+                throw new InvalidOperationException("السعر يجب أن يكون أكبر من صفر.");
+
+            if (string.IsNullOrWhiteSpace(proposalMessage))
+                throw new InvalidOperationException("رسالة العرض مطلوبة.");
+
+            Price = price;
+            ProposalMessage = proposalMessage;
+            EstimatedDurationMinutes = estimatedDurationMinutes;
+        }
+        public void ChangeStatus(BidStatus newStatus)
+        {
+            if (Status == BidStatus.expired)
+                throw new InvalidOperationException("لا يمكن تغيير حالة عرض منتهي الصلاحية.");
+
+            Status = newStatus;
+            RespondedAt = newStatus is BidStatus.accepted or BidStatus.rejected
+                ? DateTime.UtcNow
+                : RespondedAt;
+        }
     }
 
 

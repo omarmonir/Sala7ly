@@ -77,7 +77,7 @@ using (var scope = app.Services.CreateScope())
             Email = testEmail,
             EmailConfirmed = true,
         };
-        adminUser.Activate(); 
+        adminUser.Activate();
 
         var result = await userManager.CreateAsync(adminUser, "Omar@1234");
         if (result.Succeeded)
@@ -107,5 +107,6 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapHub<ChatHub>("/chathub");
 app.MapHub<BiddingHub>("/hubs/bidding");
+app.MapHub<NotificationHub>("/hubs/notifications");
 
 await app.RunAsync();

@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Sala7ly.DAL.DataBase;
@@ -18,19 +19,59 @@ namespace Sala7ly.DAL.Repositories.Implementation
 
         public async Task<List<TechnicianProfile>> GetAllAsync()
         {
-            return await _context.TechnicianProfiles.Include(u =>u.User).ToListAsync();
+            return await _context.TechnicianProfiles.Include(u => u.User).ToListAsync();
         }
 
         public async Task<TechnicianProfile> GetByIdAsync(int id)
         {
-            return await _context.TechnicianProfiles.Include(u => u.User).FirstOrDefaultAsync(t => t.Id == id);
+            return await _context.TechnicianProfiles
+                .Include(u => u.User)
+                .FirstOrDefaultAsync(t => t.Id == id);
         }
 
         public async Task<TechnicianProfile> GetByUserIdAsync(string userId)
         {
-            return await _context.TechnicianProfiles.Include(u => u.User)
+            return await _context.TechnicianProfiles
+                .Include(u => u.User)
                 .FirstOrDefaultAsync(t => t.UserId == userId);
         }
+
+        public Task<TechnicianProfile?> GetProfileByUserIdAsync(string userId)
+            => _context.TechnicianProfiles
+                .Include(tp => tp.User)
+                .Include(tp => tp.Verifications)
+                .Include(tp => tp.Portfolio)
+                .Include(tp => tp.Categories)
+                .FirstOrDefaultAsync(tp => tp.UserId == userId && tp.IsDeleted != true);
+
+        // ── Category helpers ──────────────────────────────────────────────────
+
+       
+        public async Task<List<int>> GetCategoryIdsByUserIdAsync(string userId)
+        {
+            return await _context.TechnicianCategories
+                .Where(tc => tc.Technician.UserId == userId
+                          && tc.Technician.IsDeleted != true)
+                .Select(tc => tc.CategoryId)
+                .Distinct()
+                .ToListAsync();
+        }
+
+         
+        public async Task<List<string>> GetUserIdsByAnyCategoryAsync(IEnumerable<int> categoryIds)
+        {
+            var ids = categoryIds.ToList();
+
+            return await _context.TechnicianCategories
+                .Where(tc => ids.Contains(tc.CategoryId)
+                          && tc.Technician.IsApproved
+                          && tc.Technician.IsDeleted != true)
+                .Select(tc => tc.Technician.UserId)
+                .Distinct()
+                .ToListAsync();
+        }
+
+        // ── CRUD ──────────────────────────────────────────────────────────────
 
         public async Task AddAsync(TechnicianProfile technician)
         {
@@ -46,16 +87,10 @@ namespace Sala7ly.DAL.Repositories.Implementation
         {
             _context.TechnicianProfiles.Remove(technician);
         }
-        public Task<TechnicianProfile?> GetProfileByUserIdAsync(string userId)
-            => _context.TechnicianProfiles
-                .Include(tp => tp.User)
-                .Include(tp => tp.Verifications)
-                .Include(tp => tp.Portfolio)
-                .Include(tp => tp.Categories)
-                .FirstOrDefaultAsync(tp => tp.UserId == userId && tp.IsDeleted != true);
-        public async Task<int> SaveChangesAsync()
+
+        public Task<int> SaveChangesAsync()
         {
-            return await _context.SaveChangesAsync();
+            return _context.SaveChangesAsync();
         }
     }
 }

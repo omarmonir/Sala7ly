@@ -7,10 +7,7 @@ namespace Sala7ly.BLL.Mapper
     {
         // ── helper ────────────────────────────────────────────────────────────
 
-        /// <summary>
-        /// Builds "Street, District, City" from a real Address entity,
-        /// skipping any null / whitespace parts.
-        /// </summary>
+   
         private static string? FormatAddress(Address? address)
         {
             if (address is null) return null;
@@ -33,8 +30,7 @@ namespace Sala7ly.BLL.Mapper
                 CategoryId = request.CategoryId,
                 CustomerName = request.Profile?.User?.Name,
 
-                // FIX: was completely missing — Assigned Tasks page showed no address.
-                // .Address nav-prop is now included in all repository queries (see repo fix).
+                
                 AddressId = request.AddressId,
                 Address = FormatAddress(request.Address),
             };
@@ -63,9 +59,12 @@ namespace Sala7ly.BLL.Mapper
                 CustomerName = request.Profile?.User?.Name,
                 CategoryName = request.Category?.NameAr,
 
-                // FIX: was `request.Address?.Street` which returned "s".
-                // Now returns "Street, District, City" from the real columns.
+        
                 Address = FormatAddress(request.Address),
+
+                AiSummary = request.AiSummary,
+                AiSuggestedCategoryId = request.AiSuggestedCategoryId,
+                AiRefinementJson = request.AiRefinementJson,
             };
     }
 }

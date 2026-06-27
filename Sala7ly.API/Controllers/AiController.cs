@@ -55,5 +55,6 @@ namespace Sala7ly.API.Controllers
             var cats = await _categoryRepo.GetAllAsync();
             return cats.Select(c => $"{c.Id}:{c.NameAr}").ToList();
         }
+
     }
 }

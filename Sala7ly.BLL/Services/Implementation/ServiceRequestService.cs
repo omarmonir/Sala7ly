@@ -11,19 +11,27 @@ namespace Sala7ly.BLL.Services.Implementation
     {
         private readonly IServiceRequestRepository _serviceRequestRepository;
         private readonly ICustomerRepository _customerRepository;
-        private readonly IAddressRepository _addressRepository;   // FIX: injected
+        private readonly IAddressRepository _addressRepository;
         private readonly INotificationService _notificationService;
+        private readonly ITechnicianProfileRepository _technicianProfileRepository;
+
+        
+        private readonly ISmartMatchingService _smartMatchingService;
 
         public ServiceRequestService(
             IServiceRequestRepository serviceRequestRepository,
             ICustomerRepository customerRepository,
-            IAddressRepository addressRepository,               // FIX: added
-            INotificationService notificationService)
+            IAddressRepository addressRepository,
+            INotificationService notificationService,
+            ITechnicianProfileRepository technicianProfileRepository,
+            ISmartMatchingService smartMatchingService)
         {
             _serviceRequestRepository = serviceRequestRepository;
             _customerRepository = customerRepository;
             _addressRepository = addressRepository;
             _notificationService = notificationService;
+            _technicianProfileRepository = technicianProfileRepository;
+            _smartMatchingService = smartMatchingService;
         }
 
         // ── READ ──────────────────────────────────────────────────────────────
@@ -41,9 +49,35 @@ namespace Sala7ly.BLL.Services.Implementation
             return requests.Select(ServiceRequestMapper.ToListItemDto);
         }
 
+         
         public async Task<IEnumerable<ServiceRequestListItemDto>> GetOpenRequestsAsync()
         {
             var requests = await _serviceRequestRepository.GetOpenRequestsAsync();
+            return requests.Select(ServiceRequestMapper.ToListItemDto);
+        }
+
+
+        public async Task<IEnumerable<ServiceRequestListItemDto>> GetOpenRequestsForTechnicianAsync(
+    string technicianUserId)
+        {
+            var categoryIds = await _technicianProfileRepository
+                .GetCategoryIdsByUserIdAsync(technicianUserId);
+            Console.WriteLine($"Categories Count = {categoryIds.Count}");
+
+            Console.WriteLine($"TechnicianId = {technicianUserId}");
+            Console.WriteLine($"Categories Count = {categoryIds.Count}");
+
+            foreach (var cat in categoryIds)
+                Console.WriteLine($"Category = {cat}");
+
+            if (categoryIds.Count == 0)
+                return Enumerable.Empty<ServiceRequestListItemDto>();
+
+            var requests = await _serviceRequestRepository
+                .GetOpenRequestsByCategoryIdsAsync(categoryIds);
+
+            Console.WriteLine($"Requests Count = {requests.Count()}");
+
             return requests.Select(ServiceRequestMapper.ToListItemDto);
         }
 
@@ -75,27 +109,12 @@ namespace Sala7ly.BLL.Services.Implementation
             var customer = await _customerRepository.GetByUserIdAsync(userId);
             if (customer is null) return false;
 
-            // ------------------------------------------------------------------
-            // FIX — resolve the real AddressId.
-            //
-            // BEFORE: the frontend always sent addressId = 1 (hardcoded), so every
-            // request was linked to the same dummy address row ("s", "s", "s").
-            //
-            // NOW:
-            //   • If dto.AddressId > 0  → the customer chose a saved address.
-            //     Verify it exists and belongs to this customer, then use its ID.
-            //   • Otherwise             → the customer typed a free-text address.
-            //     Create a new Address row from ServiceAddress/City/District,
-            //     save it, and use the generated ID.
-            //
-            // Note: Address.CustomerId maps to CustomerProfile.Id (not User.Id).
-            // ------------------------------------------------------------------
+            // ── Resolve address ───────────────────────────────────────────────
             int resolvedAddressId;
 
             if (dto.AddressId.HasValue && dto.AddressId.Value > 0)
             {
                 var existing = await _addressRepository.GetByIdAsync(dto.AddressId.Value);
-                // make sure the address belongs to this customer
                 if (existing is null || existing.CustomerId != customer.Id)
                     return false;
 
@@ -103,14 +122,11 @@ namespace Sala7ly.BLL.Services.Implementation
             }
             else
             {
-                // Must have something to save
                 if (string.IsNullOrWhiteSpace(dto.ServiceAddress))
                     return false;
 
-                // Use the Address parameterised constructor:
-                // Address(int customerId, string title, string street, string city, string district)
                 var newAddress = new Address(
-                    customerId: customer.Id,                             // CustomerProfile.Id
+                    customerId: customer.Id,
                     title: dto.ServiceAddress.Trim(),
                     street: dto.ServiceAddress.Trim(),
                     city: dto.City?.Trim() ?? dto.ServiceAddress.Trim(),
@@ -119,12 +135,12 @@ namespace Sala7ly.BLL.Services.Implementation
                 newAddress.MarkCreated(userId);
 
                 await _addressRepository.AddAsync(newAddress);
-                await _addressRepository.SaveChangesAsync();            // gets the new Id
+                await _addressRepository.SaveChangesAsync();
 
                 resolvedAddressId = newAddress.Id;
             }
 
-            // ── images ────────────────────────────────────────────────────────
+            // ── Images ────────────────────────────────────────────────────────
             var imageUrls = new List<string>();
             if (dto.Images != null && dto.Images.Any())
             {
@@ -144,7 +160,7 @@ namespace Sala7ly.BLL.Services.Implementation
                 }
             }
 
-            // ── create request with the REAL address ID ───────────────────────
+            // ── Persist the request ───────────────────────────────────────────
             var request = new ServiceRequest(
                 dto.Title,
                 dto.Description,
@@ -154,13 +170,21 @@ namespace Sala7ly.BLL.Services.Implementation
                 dto.IsEmergency,
                 dto.ScheduledAt,
                 customer.Id,
-                resolvedAddressId,   // ← real ID, never hardcoded
+                resolvedAddressId,
                 dto.CategoryId
             );
             request.MarkCreated(userId);
 
             await _serviceRequestRepository.AddAsync(request);
             await _serviceRequestRepository.SaveChangesAsync();
+
+            // ── AI-powered smart matching + notification dispatch ──────────────
+            // Runs after the request is persisted so the AI has a real request.Id
+            // to embed in notifications.  Wrapped in its own try/catch inside
+            // SmartMatchingService so a failure here never returns false to the
+            // customer.
+            await _smartMatchingService.MatchAndNotifyAsync(request, userId);
+
             return true;
         }
 

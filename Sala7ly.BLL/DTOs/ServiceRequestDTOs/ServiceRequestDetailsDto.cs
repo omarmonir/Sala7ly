@@ -20,9 +20,10 @@
         public DateTime? CreatedOn { get; set; }
         public string? CustomerName { get; set; }
         public string? CategoryName { get; set; }
-
-        // FIX: was only Street ("s") — now returns "Street, District, City"
-        // built by the mapper's FormatAddress() helper from the real Address entity.
         public string? Address { get; set; }
+
+        public string? AiSummary { get; set; }
+        public int? AiSuggestedCategoryId { get; set; }
+        public string? AiRefinementJson { get; set; }
     }
 }

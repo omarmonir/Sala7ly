@@ -25,7 +25,7 @@ namespace Sala7ly.BLL.Services.Implementation
             _hubContext = hubContext;
         }
 
-        // ── Sending ──────────────────────────────────────────
+        // ── Single-user notification ──────────────────────────────────────────
 
         public async Task NotifyUserAsync(
             string userId,
@@ -36,7 +36,7 @@ namespace Sala7ly.BLL.Services.Implementation
             string? deepLink = null,
             string? metadata = null)
         {
-            // 1. build + save the notification
+            // 1. persist
             var notification = new Notification
             {
                 UserId = userId,
@@ -54,7 +54,7 @@ namespace Sala7ly.BLL.Services.Implementation
             await _repository.AddAsync(notification);
             await _repository.SaveChangesAsync();
 
-            // 2. push live to that specific user
+            // 2. push live
             try
             {
                 await _hubContext.Clients.User(userId).SendAsync("ReceiveNotification", new
@@ -68,19 +68,40 @@ namespace Sala7ly.BLL.Services.Implementation
                     sentAt = notification.SentAt
                 });
 
-                // 3. mark as pushed
                 notification.IsPushed = true;
                 _repository.Update(notification);
                 await _repository.SaveChangesAsync();
             }
             catch
             {
-                // user offline / no live connection — it's still saved,
-                // so they'll see it on next load. IsPushed stays false.
+                // user offline — notification is still persisted
             }
         }
 
-        // ── Reading ──────────────────────────────────────────
+        // ── Multi-user notification (fan-out) ─────────────────────────────────
+ 
+        public async Task NotifyMultipleUsersAsync(
+            IEnumerable<string> userIds,
+            NotificationType type,
+            string title,
+            string body,
+            string? actorId = null,
+            string? deepLink = null,
+            string? metadata = null)
+        {
+            var targets = userIds?.Distinct().ToList();
+            if (targets is null || targets.Count == 0)
+                return;
+
+            // Fan-out: notify each technician individually so that IsRead is
+            // tracked per-user. We run them in parallel for speed.
+            var tasks = targets.Select(uid =>
+                NotifyUserAsync(uid, type, title, body, actorId, deepLink, metadata));
+
+            await Task.WhenAll(tasks);
+        }
+
+        // ── Reading ───────────────────────────────────────────────────────────
 
         public async Task<List<NotificationResponseDto>> GetMyNotificationsAsync(string userId)
         {
@@ -95,7 +116,6 @@ namespace Sala7ly.BLL.Services.Implementation
         {
             var notification = await _repository.GetByIdAsync(id);
 
-            // not found, or belongs to another user → reject
             if (notification is null || notification.UserId != userId)
                 return false;
 
@@ -107,7 +127,7 @@ namespace Sala7ly.BLL.Services.Implementation
             return true;
         }
 
-        // ── Helper ───────────────────────────────────────────
+        // ── Helper ────────────────────────────────────────────────────────────
 
         private static NotificationResponseDto MapToDto(Notification n)
         {

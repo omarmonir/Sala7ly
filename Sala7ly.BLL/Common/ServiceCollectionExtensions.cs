@@ -31,14 +31,15 @@ namespace Sala7ly.BLL.Common
             services.AddScoped<ITechnicianVerificationService, TechnicianVerificationService>();
             services.AddScoped<IAddressService, AddressService>();
             services.AddScoped<INotificationService, NotificationService>();
-            services.AddScoped<IReviewService, ReviewService>();          
-           
+            services.AddScoped<IReviewService, ReviewService>();
+
 
             services.AddScoped<IWalletService, WalletService>();
             services.AddScoped<IPaymentService, PaymentService>();
 
             services.AddScoped<IFileService, FileService>();
             services.AddScoped<IServiceRequestService, ServiceRequestService>();
+            services.AddScoped<ISmartMatchingService, SmartMatchingService>();
             services.AddScoped<IChatService, ChatService>();
             services.AddScoped<IBidService, BidService>();
             services.AddScoped<IRequestRefinerService, RequestRefinerService>();
@@ -78,7 +79,7 @@ namespace Sala7ly.BLL.Common
         {
             var jwtSettings = configuration.GetSection("Jwt");
             var secretKey = jwtSettings["Key"];
-           
+
 
             services.AddIdentity<User, IdentityRole>(options =>
             {

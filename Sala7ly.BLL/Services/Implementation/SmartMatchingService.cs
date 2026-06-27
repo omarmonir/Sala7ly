@@ -96,51 +96,72 @@ namespace Sala7ly.BLL.Services.Implementation
                     request.CategoryId,
                     categoryList);
 
-                // ── Step 3: save AI result + apply override if needed ───────────
+                // ── Step 3: apply override when AI differs from customer ────────
+                int originalCategoryId = request.CategoryId;   // snapshot before any change
+
                 if (aiSuggestedCategoryId.HasValue
+                    && aiSuggestedCategoryId.Value != request.CategoryId
                     && allCategories.Any(c => c.Id == aiSuggestedCategoryId.Value))
                 {
-                    var suggestedName = allCategories
-                        .First(c => c.Id == aiSuggestedCategoryId.Value)
-                        .NameAr;
+                    result.ResolvedCategoryId = aiSuggestedCategoryId.Value;
+                    result.CategoryWasOverridden = true;
 
-                    // احفظ نتيجة AI دائماً
+                    var originalName = allCategories
+                        .FirstOrDefault(c => c.Id == originalCategoryId)?.NameAr ?? originalCategoryId.ToString();
+                    var suggestedName = allCategories
+                        .First(c => c.Id == aiSuggestedCategoryId.Value).NameAr;
+
+                    result.AiMatchReason =
+                        $"AI اقترح الفئة «{suggestedName}» بدلاً من «{originalName}».";
+
+                    // ── THE FIX: update the actual CategoryId on the entity ────
+                    // Without this, technician feeds (which filter by CategoryId)
+                    // would never show this request to the correct technicians.
+                    request.UpdateCategory(aiSuggestedCategoryId.Value);
+
+                    // Store the AI metadata fields
                     request.SetAiRefinement(
                         summary: $"AI matched request to category: {suggestedName}",
                         suggestedCategoryId: aiSuggestedCategoryId.Value,
                         refinementJson: BuildRefinementJson(
-                            request,
-                            aiSuggestedCategoryId.Value,
-                            suggestedName));
+                                                request,
+                                                originalCategoryId,
+                                                aiSuggestedCategoryId.Value,
+                                                suggestedName));
 
                     _requestRepo.Update(request);
                     await _requestRepo.SaveChangesAsync();
 
-                    // لو AI اختار فئة مختلفة
-                    if (aiSuggestedCategoryId.Value != request.CategoryId)
-                    {
-                        result.ResolvedCategoryId = aiSuggestedCategoryId.Value;
-                        result.CategoryWasOverridden = true;
-
-                        result.AiMatchReason =
-                            $"AI اقترح الفئة «{suggestedName}» بدلاً من الفئة المختارة.";
-
-                        _logger.LogInformation(
-                            "SmartMatching: request {Id} category overridden {Old} → {New} by AI.",
-                            request.Id,
-                            request.CategoryId,
-                            aiSuggestedCategoryId.Value);
-                    }
-                    else
-                    {
-                        result.AiMatchReason =
-                            "الفئة المختارة من قِبل العميل مناسبة وتم تأكيدها بواسطة AI.";
-                    }
+                    // Detailed log: original → AI suggestion → final saved value
+                    _logger.LogInformation(
+                        "SmartMatching: request {RequestId} | " +
+                        "OriginalCategory: {OriginalId} ({OriginalName}) | " +
+                        "AiSuggested: {SuggestedId} ({SuggestedName}) | " +
+                        "FinalSavedCategory: {FinalId} ({FinalName}) | " +
+                        "CategoryOverridden: true",
+                        request.Id,
+                        originalCategoryId, originalName,
+                        aiSuggestedCategoryId.Value, suggestedName,
+                        request.CategoryId, suggestedName);
                 }
                 else
                 {
-                    result.AiMatchReason =
-                        "تعذر على AI تحديد فئة مناسبة.";
+                    var categoryName = allCategories
+                        .FirstOrDefault(c => c.Id == request.CategoryId)?.NameAr
+                        ?? request.CategoryId.ToString();
+
+                    result.AiMatchReason = "الفئة المختارة من قِبل العميل مناسبة.";
+
+                    _logger.LogInformation(
+                        "SmartMatching: request {RequestId} | " +
+                        "OriginalCategory: {OriginalId} ({OriginalName}) | " +
+                        "AiSuggested: {SuggestedId} ({SuggestedName}) | " +
+                        "FinalSavedCategory: {FinalId} ({FinalName}) | " +
+                        "CategoryOverridden: false",
+                        request.Id,
+                        originalCategoryId, categoryName,
+                        aiSuggestedCategoryId ?? originalCategoryId, categoryName,
+                        request.CategoryId, categoryName);
                 }
 
                 // ── Step 4: notify matched technicians ────────────────────────
@@ -282,6 +303,16 @@ namespace Sala7ly.BLL.Services.Implementation
                 actorId: customerUserId,
                 metadata: BuildMetadata(request, result));
 
+            _logger.LogInformation(
+                "SmartMatching: request {RequestId} | " +
+                "FinalCategory: {CategoryId} | " +
+                "MatchedTechnicians: {Count} | " +
+                "NotificationsDispatched: {Count}",
+                request.Id,
+                result.ResolvedCategoryId,
+                technicianUserIds.Count,
+                technicianUserIds.Count);
+
             // 3. Real-time BiddingHub broadcast so technicians on the bid board
             //    see the new card without refreshing.
             //    Each technician is targeted individually via their UserId group.
@@ -327,14 +358,17 @@ namespace Sala7ly.BLL.Services.Implementation
 
         private static string BuildRefinementJson(
             ServiceRequest request,
+            int originalCategoryId,
             int suggestedCategoryId,
             string suggestedCategoryName)
             => JsonSerializer.Serialize(new
             {
                 source = "SmartMatching",
-                originalCategoryId = request.CategoryId,
+                originalCategoryId,                        // what customer chose
+                finalCategoryId = suggestedCategoryId,  // what was actually saved
                 suggestedCategoryId,
                 suggestedCategoryName,
+                categoryOverridden = originalCategoryId != suggestedCategoryId,
                 requestTitle = request.Title,
                 generatedAt = DateTime.UtcNow
             }, new JsonSerializerOptions

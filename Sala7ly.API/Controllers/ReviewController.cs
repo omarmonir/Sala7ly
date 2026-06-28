@@ -81,9 +81,9 @@ namespace Sala7ly.API.Controllers
             var reviewerUserId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             if (string.IsNullOrEmpty(reviewerUserId)) return Unauthorized();
 
-            var success = await _service.CreateAsync(reviewerUserId, dto);
-            if (!success)
-                return BadRequest(new { message = "تعذّر إضافة التقييم. تأكد من أن الطلب مكتمل وأنك طرف فيه ولم تقم بتقييمه مسبقاً." });
+            var (ok, error) = await _service.CreateAsync(reviewerUserId, dto);
+            if (!ok)
+                return BadRequest(new { message = error });
 
             return StatusCode(201, new { message = "تم إضافة التقييم بنجاح" });
         }

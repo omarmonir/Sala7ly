@@ -74,34 +74,32 @@ namespace Sala7ly.BLL.Services.Implementation
             await _reviewRepo.SaveChangesAsync();
             return true;
         }
-        public async Task<bool> CreateAsync(string reviewerUserId, CreateReviewDto dto)
+        public async Task<(bool ok, string? error)> CreateAsync(string reviewerUserId, CreateReviewDto dto)
         {
-            // load the request with its parties to figure out who's being reviewed
             var request = await _requestRepo.GetByIdWithPartiesAsync(dto.RequestId);
             if (request is null)
-                return false;
+                return (false, "الطلب غير موجود.");
 
-            // only completed requests can be reviewed
             if (request.Status != Status.completed)
-                return false;
+                return (false, $"الطلب ليس مكتملاً. حالته الحالية: {request.Status}");
 
             var customerUserId = request.Profile?.UserId;
             var technicianUserId = request.SelectedBid?.Technician?.UserId;
 
-            // reviewer must be a party to this request; reviewee is the other party
+            if (string.IsNullOrEmpty(technicianUserId))
+                return (false, "لا يوجد فني معيّن على هذا الطلب.");
+
             string? revieweeUserId =
                 reviewerUserId == customerUserId ? technicianUserId :
                 reviewerUserId == technicianUserId ? customerUserId :
                 null;
 
             if (revieweeUserId is null)
-                return false;   // reviewer isn't part of this request
+                return (false, "أنت لست طرفاً في هذا الطلب.");
 
-            // prevent duplicate reviews from the same reviewer on this request
             if (await _reviewRepo.HasReviewForRequestAsync(dto.RequestId, reviewerUserId))
-                return false;
+                return (false, "لقد قمت بتقييم هذا الطلب مسبقاً.");
 
-            // compute overall as the average of the four sub-scores
             var overall = (dto.QualityScore + dto.PunctualityScore
                          + dto.CommunicationScore + dto.ValueScore) / 4f;
 
@@ -121,20 +119,18 @@ namespace Sala7ly.BLL.Services.Implementation
 
             await _reviewRepo.AddAsync(review);
             var saved = await _reviewRepo.SaveChangesAsync();
-
             if (saved <= 0)
-                return false;
+                return (false, "تعذّر حفظ التقييم.");
 
-            // notify the reviewee they got a review
             await _notificationService.NotifyUserAsync(
                 userId: revieweeUserId,
                 type: NotificationType.system,
                 title: "لديك تقييم جديد ⭐",
-                body: "قام أحد المستخدمين بتقييم تعاملك. اضغط لعرض التقييم.",
+                body: "قام أحد المستخدمين بتقييم تعاملك.",
                 actorId: reviewerUserId,
                 metadata: $"{{\"requestId\": {dto.RequestId}, \"reviewId\": {review.Id}}}");
 
-            return true;
+            return (true, null);
         }
 
         public async Task<bool> AddTechnicianReplyAsync(string technicianUserId, TechnicianReplyDto dto)

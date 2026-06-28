@@ -107,6 +107,6 @@ app.UseAuthorization();
 app.MapControllers();
 app.MapHub<ChatHub>("/chathub");
 app.MapHub<BiddingHub>("/hubs/bidding");
-app.MapHub<NotificationHub>("/hubs/notifications");
+app.MapHub<NotificationHub>("/notificationhub");
 
 await app.RunAsync();

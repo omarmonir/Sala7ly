@@ -1,3 +1,5 @@
+using System.Security.Claims;
+using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
@@ -10,8 +12,7 @@ using Sala7ly.DAL.DataBase;
 using Sala7ly.DAL.Entities;
 using Sala7ly.DAL.Repositories.Abstraction;
 using Sala7ly.DAL.Repositories.Implementation;
-using System.Security.Claims;
-using System.Text;
+using static Sala7ly.BLL.Services.Implementation.MatchingService;
 
 namespace Sala7ly.BLL.Common
 {
@@ -39,7 +40,7 @@ namespace Sala7ly.BLL.Common
             services.AddScoped<IEmbeddingService, GeminiEmbeddingService>();
             services.AddScoped<IWalletService, WalletService>();
             services.AddScoped<IPaymentService, PaymentService>();
-
+            services.AddScoped<IAdminService, AdminService>();
             services.AddScoped<IFileService, FileService>();
             services.AddScoped<IServiceRequestService, ServiceRequestService>();
             services.AddScoped<ISmartMatchingService, SmartMatchingService>();

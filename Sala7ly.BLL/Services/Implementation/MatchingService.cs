@@ -7,7 +7,7 @@ using Sala7ly.DAL.Repositories.Abstraction;
 namespace Sala7ly.BLL.Services.Implementation
 {
 
-    public class MatchingService : BaseAiService, IMatchingService
+    public partial class MatchingService : BaseAiService, IMatchingService
     {
         private readonly IEmbeddingService _embedding;
         private readonly ITechnicianProfileRepository _technicianRepo;
@@ -197,5 +197,6 @@ namespace Sala7ly.BLL.Services.Implementation
             public int Index { get; set; }
             public double Score { get; set; }
         }
+
     }
 }

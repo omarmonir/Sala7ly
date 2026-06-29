@@ -34,6 +34,8 @@ namespace Sala7ly.DAL.Common
             services.AddScoped<IWalletTransactionRepository, WalletTransactionRepository>();
             services.AddScoped<IEscrowRepository, EscrowRepository>();
             services.AddScoped<IAiInteractionRepository, AiInteractionRepository>();
+            services.AddScoped<IAdminRepository, AdminRepository>();
+
             return services;    
         }
     }

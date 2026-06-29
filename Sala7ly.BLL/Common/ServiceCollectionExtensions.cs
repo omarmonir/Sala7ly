@@ -122,7 +122,9 @@ namespace Sala7ly.BLL.Common
 
                     var path = context.HttpContext.Request.Path;
                     if (!string.IsNullOrEmpty(accessToken) &&
-                        path.StartsWithSegments("/hubs"))
+    (path.StartsWithSegments("/hubs") ||
+     path.StartsWithSegments("/chathub") ||
+     path.StartsWithSegments("/notificationhub")))
                     {
                         context.Token = accessToken;
                     }

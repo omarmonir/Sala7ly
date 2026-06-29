@@ -7,6 +7,7 @@ using Sala7ly.BLL.Services.Abstraction;
 using Sala7ly.BLL.Services.Implementation;
 using Sala7ly.DAL.Common;
 using Sala7ly.DAL.Entities;
+using Sala7ly.DAL.Repositories.Abstraction;
 using Stripe;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -42,7 +43,15 @@ builder.Services.AddSwaggerGen(c =>
     });
 });
 StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
-
+builder.Services.AddDistributedMemoryCache();
+builder.Services.AddSingleton<IGitHubAiClient>(sp =>
+{
+    var config = sp.GetRequiredService<IConfiguration>();
+    var useMock = bool.Parse(config["AI:GitHub:UseMock"] ?? "false");
+    return useMock
+        ? new MockGitHubAiClient()
+        : new GitHubAiClient(config);
+});
 builder.Services.AddDataAccessLayer(builder.Configuration);
 builder.Services.AddBusinessLogicLayer(builder.Configuration);
 builder.Services.AddScoped<IFilePathProvider, WebHostEnvironmentPathProvider>();

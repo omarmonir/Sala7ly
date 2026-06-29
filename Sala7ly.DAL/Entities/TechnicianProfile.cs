@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Text.Json;
 
 namespace Sala7ly.DAL.Entities
 {
@@ -20,16 +22,33 @@ namespace Sala7ly.DAL.Entities
 
         public bool IsApproved { get;  set; } = false;  
         public bool IsFeatured { get; set; } = false;  // ????????????????????????????????
+        public string? StripeAccountId { get; set; }
+        public bool StripeOnboardingDone { get; set; } = false;
 
         public SubscriptionTier SubscriptionTier { get;  set; } = SubscriptionTier.Free;
         public DateTime? SubscriptionExpiresAt { get;  set; }
-
-        public float[] EmbeddingVector { get; set; } = new float [1];
         public DateTime? ApprovedAt { get;  set; }
 
 
 
+        public string? EmbeddingVectorJson { get; set; }
+        public DateTime? EmbeddingUpdatedAt { get; set; }
+        public string? ReviewSummary { get; set; }
+        public double? SentimentScore { get; set; }
+        public string? TopStrengths { get; set; }
+        public string? CommonComplaints { get; set; }
+        public DateTime? SummaryUpdatedAt { get; set; }
 
+        [NotMapped]
+        public float[]? EmbeddingVector
+        {
+            get => EmbeddingVectorJson == null
+                ? null
+                : JsonSerializer.Deserialize<float[]>(EmbeddingVectorJson);
+            set => EmbeddingVectorJson = value == null
+                ? null
+                : JsonSerializer.Serialize(value);
+        }
 
 
 

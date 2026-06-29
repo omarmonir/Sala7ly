@@ -84,8 +84,9 @@ namespace Sala7ly.DAL.Entities
             Status = Status.cancelled;
         }
 
-        public void SetAiData(decimal priceMin, decimal priceMax)
+        public void SetAiData(string summary, decimal priceMin, decimal priceMax)
         {
+            AiSummary = summary;
             AiPriceMin = priceMin;
             AiPriceMax = priceMax;
         }

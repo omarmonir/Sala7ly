@@ -11,7 +11,7 @@ public class TechnicianCategory : BaseEntity
     public TechnicianProfile Technician { get; private set; }
     public ServiceCategory Category { get; private set; }
 
-    private TechnicianCategory() { }  
+    private TechnicianCategory() { }
 
     public TechnicianCategory(int categoryId)
     {

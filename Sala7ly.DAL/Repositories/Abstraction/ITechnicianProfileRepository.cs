@@ -11,7 +11,8 @@ namespace Sala7ly.DAL.Repositories.Abstraction
         Task<TechnicianProfile> GetByUserIdAsync(string userId);
         Task<TechnicianProfile?> GetProfileByUserIdAsync(string userId);
 
-         
+        Task<TechnicianProfile?> GetByIdWithCategoriesAsync(int id);           // ← add
+
         Task<List<int>> GetCategoryIdsByUserIdAsync(string userId);
 
      
@@ -21,5 +22,7 @@ namespace Sala7ly.DAL.Repositories.Abstraction
         void Update(TechnicianProfile technician);
         void Delete(TechnicianProfile technician);
         Task<int> SaveChangesAsync();
+        Task<List<TechnicianProfile>> GetApprovedWithEmbeddingsAsync();          // ← add
+        Task<List<TechnicianProfile>> GetWithOutdatedEmbeddingsAsync(int days);  // ← add
     }
 }

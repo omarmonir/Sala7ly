@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Azure;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 using Sala7ly.DAL.DataBase;
 using Sala7ly.DAL.Entities;
 using Sala7ly.DAL.Repositories.Abstraction;

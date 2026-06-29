@@ -26,6 +26,7 @@ namespace Sala7ly.DAL.Repositories.Implementation
         {
             return await _context.TechnicianProfiles
                 .Include(u => u.User)
+                .Include(tp => tp.Categories)
                 .FirstOrDefaultAsync(t => t.Id == id);
         }
 
@@ -33,6 +34,7 @@ namespace Sala7ly.DAL.Repositories.Implementation
         {
             return await _context.TechnicianProfiles
                 .Include(u => u.User)
+
                 .FirstOrDefaultAsync(t => t.UserId == userId);
         }
 
@@ -45,8 +47,15 @@ namespace Sala7ly.DAL.Repositories.Implementation
                 .FirstOrDefaultAsync(tp => tp.UserId == userId && tp.IsDeleted != true);
 
         // ── Category helpers ──────────────────────────────────────────────────
+        public async Task<TechnicianProfile?> GetByIdWithCategoriesAsync(int id)
+        {
+            return await _context.TechnicianProfiles
+                .Include(t => t.User)
+                .Include(t => t.Categories)
+                    .ThenInclude(c => c.Category)
+                .FirstOrDefaultAsync(t => t.Id == id);
+        }
 
-       
         public async Task<List<int>> GetCategoryIdsByUserIdAsync(string userId)
         {
             return await _context.TechnicianCategories
@@ -91,6 +100,27 @@ namespace Sala7ly.DAL.Repositories.Implementation
         public Task<int> SaveChangesAsync()
         {
             return _context.SaveChangesAsync();
+        }
+        public async Task<List<TechnicianProfile>> GetApprovedWithEmbeddingsAsync()
+        {
+            return await _context.TechnicianProfiles
+                .Where(t => t.IsApproved
+                         && t.EmbeddingVectorJson != null)
+                .Include(t => t.User)
+                .Include(t => t.Categories)
+                    .ThenInclude(c => c.Category)
+                .ToListAsync();
+        }
+
+        public async Task<List<TechnicianProfile>> GetWithOutdatedEmbeddingsAsync(int days)
+        {
+            var cutoff = DateTime.UtcNow.AddDays(-days);
+
+            return await _context.TechnicianProfiles
+                .Where(t => t.IsApproved
+                         && (t.EmbeddingUpdatedAt == null
+                          || t.EmbeddingUpdatedAt < cutoff))
+                .ToListAsync();
         }
     }
 }

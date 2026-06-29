@@ -29,6 +29,15 @@ namespace Sala7ly.DAL.Repositories.Implementation
                 .Where(r => r.CustomerId == customerId && r.IsDeleted != true)
                 .OrderByDescending(r => r.CreatedOn)
                 .ToListAsync();
+        public async Task<ServiceRequest?> GetByIdWithDetailsAsync(int requestId)
+        {
+            return await _context.ServiceRequests
+                .Include(r => r.Category)
+                .Include(r => r.Address)
+                .Include(r => r.Profile)
+                    .ThenInclude(p => p.User)
+                .FirstOrDefaultAsync(r => r.Id == requestId && r.IsDeleted != true);
+        }
 
         // ── GET ALL OPEN REQUESTS (Admin / unfiltered fallback) ───────────────
         public async Task<IEnumerable<ServiceRequest>> GetOpenRequestsAsync()
@@ -92,7 +101,8 @@ namespace Sala7ly.DAL.Repositories.Implementation
                 .Include(r => r.Bids)
                     .ThenInclude(b => b.Technician)
                         .ThenInclude(t => t.User)
-                .Where(r => r.Status == Status.assigned
+                .Where(r => r.Status != Status.in_progress 
+                         && r.Status != Status.open
                          && r.Bids.Any(b => b.Technician.User.Id == userId)
                          && r.IsDeleted != true)
                 .OrderByDescending(r => r.CreatedOn)

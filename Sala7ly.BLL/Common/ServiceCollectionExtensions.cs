@@ -33,7 +33,10 @@ namespace Sala7ly.BLL.Common
             services.AddScoped<INotificationService, NotificationService>();
             services.AddScoped<IReviewService, ReviewService>();
 
-
+            services.AddScoped<IPriceEstimationService, PriceEstimationService>();
+            services.AddScoped<IImageAnalysisService, ImageAnalysisService>();
+            services.AddScoped<IMatchingService, MatchingService>();
+            services.AddScoped<IEmbeddingService, GeminiEmbeddingService>();
             services.AddScoped<IWalletService, WalletService>();
             services.AddScoped<IPaymentService, PaymentService>();
 

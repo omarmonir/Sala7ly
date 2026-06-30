@@ -6,7 +6,7 @@ namespace Sala7ly.DAL.Entities
     {
         public ServiceRequest() { }
 
-        public ServiceRequest(string title, string description, List<string> imageUrls, Urgency urgency, BookingMode bookingMode, 
+        public ServiceRequest(string title, string description, List<string> imageUrls, Urgency urgency, BookingMode bookingMode,
                               bool isEmergency, DateTime scheduledAt, int customerId, int addressId, int categoryId)
         {
             Title = title;
@@ -84,8 +84,9 @@ namespace Sala7ly.DAL.Entities
             Status = Status.cancelled;
         }
 
-        public void SetAiData(decimal priceMin, decimal priceMax)
+        public void SetAiData(string summary, decimal priceMin, decimal priceMax)
         {
+            AiSummary = summary;
             AiPriceMin = priceMin;
             AiPriceMax = priceMax;
         }
@@ -109,6 +110,16 @@ namespace Sala7ly.DAL.Entities
             AiSummary = summary;
             AiSuggestedCategoryId = suggestedCategoryId;
             AiRefinementJson = refinementJson;
+        }
+
+        /// <summary>
+        /// Allows the AI matching service to correct the category when the
+        /// customer selected the wrong one. CategoryId has a private setter
+        /// so all mutations must go through domain methods.
+        /// </summary>
+        public void UpdateCategory(int categoryId)
+        {
+            CategoryId = categoryId;
         }
     }
 }

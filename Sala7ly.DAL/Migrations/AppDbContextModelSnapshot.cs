@@ -1082,59 +1082,6 @@ namespace Sala7ly.DAL.Migrations
                     b.ToTable("ServiceRequests");
                 });
 
-            modelBuilder.Entity("Sala7ly.DAL.Entities.TechnicianCategory", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CategoryId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("CreatedOn")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("DeletedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("DeletedOn")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool?>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsPrimary")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false);
-
-                    b.Property<int>("TechnicianId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("UpdatedOn")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("YearsInCategory")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CategoryId");
-
-                    b.HasIndex("TechnicianId", "CategoryId")
-                        .IsUnique();
-
-                    b.ToTable("TechnicianCategories");
-                });
-
             modelBuilder.Entity("Sala7ly.DAL.Entities.TechnicianPortfolio", b =>
                 {
                     b.Property<int>("Id")
@@ -1215,6 +1162,9 @@ namespace Sala7ly.DAL.Migrations
                     b.Property<int>("CancelledJobs")
                         .HasColumnType("int");
 
+                    b.Property<string>("CommonComplaints")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("CompletedJobs")
                         .HasColumnType("int");
 
@@ -1230,8 +1180,13 @@ namespace Sala7ly.DAL.Migrations
                     b.Property<DateTime?>("DeletedOn")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("EmbeddingUpdatedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("EmbeddingVector")
-                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("EmbeddingVectorJson")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("ExperienceYears")
@@ -1253,6 +1208,18 @@ namespace Sala7ly.DAL.Migrations
                     b.Property<double>("OverallRating")
                         .HasColumnType("float");
 
+                    b.Property<string>("ReviewSummary")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<double?>("SentimentScore")
+                        .HasColumnType("float");
+
+                    b.Property<string>("StripeAccountId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("StripeOnboardingDone")
+                        .HasColumnType("bit");
+
                     b.Property<DateTime?>("SubscriptionExpiresAt")
                         .HasColumnType("datetime2");
 
@@ -1262,6 +1229,12 @@ namespace Sala7ly.DAL.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)")
                         .HasDefaultValue("Free");
+
+                    b.Property<DateTime?>("SummaryUpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("TopStrengths")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("TotalReviews")
                         .HasColumnType("int");
@@ -1588,6 +1561,59 @@ namespace Sala7ly.DAL.Migrations
                     b.ToTable("WalletTransactions", (string)null);
                 });
 
+            modelBuilder.Entity("TechnicianCategory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("CreatedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("DeletedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool?>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsPrimary")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<int>("TechnicianId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("YearsInCategory")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
+
+                    b.HasIndex("TechnicianId", "CategoryId")
+                        .IsUnique();
+
+                    b.ToTable("TechnicianCategories");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -1900,25 +1926,6 @@ namespace Sala7ly.DAL.Migrations
                     b.Navigation("SelectedBid");
                 });
 
-            modelBuilder.Entity("Sala7ly.DAL.Entities.TechnicianCategory", b =>
-                {
-                    b.HasOne("Sala7ly.DAL.Entities.ServiceCategory", "Category")
-                        .WithMany("TechnicianCategories")
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Sala7ly.DAL.Entities.TechnicianProfile", "Technician")
-                        .WithMany("Categories")
-                        .HasForeignKey("TechnicianId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Category");
-
-                    b.Navigation("Technician");
-                });
-
             modelBuilder.Entity("Sala7ly.DAL.Entities.TechnicianPortfolio", b =>
                 {
                     b.HasOne("Sala7ly.DAL.Entities.TechnicianProfile", "Technician")
@@ -1979,6 +1986,25 @@ namespace Sala7ly.DAL.Migrations
                     b.Navigation("EscrowTransaction");
 
                     b.Navigation("Wallet");
+                });
+
+            modelBuilder.Entity("TechnicianCategory", b =>
+                {
+                    b.HasOne("Sala7ly.DAL.Entities.ServiceCategory", "Category")
+                        .WithMany("TechnicianCategories")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Sala7ly.DAL.Entities.TechnicianProfile", "Technician")
+                        .WithMany("Categories")
+                        .HasForeignKey("TechnicianId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Category");
+
+                    b.Navigation("Technician");
                 });
 
             modelBuilder.Entity("Sala7ly.DAL.Entities.Address", b =>

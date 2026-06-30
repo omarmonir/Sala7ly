@@ -8,8 +8,20 @@ namespace Sala7ly.BLL.Services.Abstraction
     public interface INotificationService
     {
         // ── sending (called internally from other services) ──
+
+       
         Task NotifyUserAsync(
             string userId,
+            NotificationType type,
+            string title,
+            string body,
+            string? actorId = null,
+            string? deepLink = null,
+            string? metadata = null);
+
+         
+        Task NotifyMultipleUsersAsync(
+            IEnumerable<string> userIds,
             NotificationType type,
             string title,
             string body,

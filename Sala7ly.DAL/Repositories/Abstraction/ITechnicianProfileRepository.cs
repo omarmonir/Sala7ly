@@ -8,11 +8,21 @@ namespace Sala7ly.DAL.Repositories.Abstraction
     {
         Task<List<TechnicianProfile>> GetAllAsync();
         Task<TechnicianProfile> GetByIdAsync(int id);
-        Task<TechnicianProfile> GetByUserIdAsync(string userId); 
+        Task<TechnicianProfile> GetByUserIdAsync(string userId);
         Task<TechnicianProfile?> GetProfileByUserIdAsync(string userId);
+
+        Task<TechnicianProfile?> GetByIdWithCategoriesAsync(int id);           // ← add
+
+        Task<List<int>> GetCategoryIdsByUserIdAsync(string userId);
+
+     
+        Task<List<string>> GetUserIdsByAnyCategoryAsync(IEnumerable<int> categoryIds);
+
         Task AddAsync(TechnicianProfile technician);
         void Update(TechnicianProfile technician);
         void Delete(TechnicianProfile technician);
         Task<int> SaveChangesAsync();
+        Task<List<TechnicianProfile>> GetApprovedWithEmbeddingsAsync();          // ← add
+        Task<List<TechnicianProfile>> GetWithOutdatedEmbeddingsAsync(int days);  // ← add
     }
 }

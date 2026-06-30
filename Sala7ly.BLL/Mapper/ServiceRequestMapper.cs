@@ -5,41 +5,66 @@ namespace Sala7ly.BLL.Mapper
 {
     public static class ServiceRequestMapper
     {
-        // ── Entity → DTO
+        // ── helper ────────────────────────────────────────────────────────────
 
-        public static ServiceRequestListItemDto ToListItemDto(ServiceRequest request) => new ServiceRequestListItemDto
+   
+        private static string? FormatAddress(Address? address)
         {
-            Id = request.Id,
-            Title = request.Title,
-            Status = request.Status.ToString(),
-            Urgency = request.Urgency.ToString(),
-            IsEmergency = request.IsEmergency,
-            ScheduledAt = request.ScheduledAt,
-            CategoryId = request.CategoryId,
-            CustomerName = request.Profile?.User?.Name
-        };
+            if (address is null) return null;
+            var parts = new[] { address.Street, address.District, address.City }
+                        .Where(p => !string.IsNullOrWhiteSpace(p));
+            return string.Join(", ", parts);
+        }
 
-        public static ServiceRequestDetailsDto ToDetailsDto(ServiceRequest request) => new ServiceRequestDetailsDto
-        {
-            Id = request.Id,
-            Title = request.Title,
-            Description = request.Description,
-            ImageUrls = request.ImageUrls,
-            Urgency = request.Urgency.ToString(),
-            Status = request.Status.ToString(),
-            BookingMode = request.BookingMode.ToString(),
-            IsEmergency = request.IsEmergency,
-            AiPriceMin = request.AiPriceMin,
-            AiPriceMax = request.AiPriceMax,
-            ScheduledAt = request.ScheduledAt,
-            CompletedAt = request.CompletedAt,
-            CustomerId = request.CustomerId,
-            CategoryId = request.CategoryId,
-            AddressId = request.AddressId,
-            CreatedOn = request.CreatedOn,
-            CustomerName = request.Profile?.User?.Name,
-            CategoryName = request.Category?.NameAr,
-            Address = request.Address?.Street
-        };
+        // ── Entity → List DTO ─────────────────────────────────────────────────
+
+        public static ServiceRequestListItemDto ToListItemDto(ServiceRequest request) =>
+            new ServiceRequestListItemDto
+            {
+                Id = request.Id,
+                Title = request.Title,
+                Status = request.Status.ToString(),
+                Urgency = request.Urgency.ToString(),
+                IsEmergency = request.IsEmergency,
+                ScheduledAt = request.ScheduledAt,
+                CategoryId = request.CategoryId,
+                CustomerName = request.Profile?.User?.Name,
+
+                
+                AddressId = request.AddressId,
+                Address = FormatAddress(request.Address),
+            };
+
+        // ── Entity → Details DTO ──────────────────────────────────────────────
+
+        public static ServiceRequestDetailsDto ToDetailsDto(ServiceRequest request) =>
+            new ServiceRequestDetailsDto
+            {
+                Id = request.Id,
+                Title = request.Title,
+                Description = request.Description,
+                ImageUrls = request.ImageUrls,
+                Urgency = request.Urgency.ToString(),
+                Status = request.Status.ToString(),
+                BookingMode = request.BookingMode.ToString(),
+                IsEmergency = request.IsEmergency,
+                AiPriceMin = request.AiPriceMin,
+                AiPriceMax = request.AiPriceMax,
+                ScheduledAt = request.ScheduledAt,
+                CompletedAt = request.CompletedAt,
+                CustomerId = request.CustomerId,
+                CategoryId = request.CategoryId,
+                AddressId = request.AddressId,
+                CreatedOn = request.CreatedOn,
+                CustomerName = request.Profile?.User?.Name,
+                CategoryName = request.Category?.NameAr,
+
+        
+                Address = FormatAddress(request.Address),
+
+                AiSummary = request.AiSummary,
+                AiSuggestedCategoryId = request.AiSuggestedCategoryId,
+                AiRefinementJson = request.AiRefinementJson,
+            };
     }
 }

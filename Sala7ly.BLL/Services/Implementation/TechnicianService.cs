@@ -5,10 +5,6 @@ using Sala7ly.BLL.Services.Abstraction;
 using Sala7ly.DAL.Entities;
 using Sala7ly.DAL.Enums;
 using Sala7ly.DAL.Repositories.Abstraction;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Sala7ly.BLL.Services.Implementation
 {
@@ -77,6 +73,13 @@ namespace Sala7ly.BLL.Services.Implementation
             // 4 — link profile and save
             profile.UserId = user.Id;
             profile.MarkCreated(user.Id);
+
+            if (dto.CategoryIds != null && dto.CategoryIds.Any())
+            {
+                profile.Categories = dto.CategoryIds.Select(catId =>
+                 new TechnicianCategory(catId)
+                ).ToList();
+            }
 
             await _technicianRepo.AddAsync(profile);
             var saved = await _technicianRepo.SaveChangesAsync();

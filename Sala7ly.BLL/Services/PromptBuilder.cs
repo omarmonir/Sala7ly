@@ -1,4 +1,4 @@
-﻿namespace Sala7ly.BLL.Services.Implementation
+﻿namespace Sala7ly.BLL.Services
 {
     /// <summary>
     /// Central place for all AI prompt strings.
@@ -67,20 +67,55 @@
             "مهمتك تحليل طلبات العملاء وتحسينها وطرح أسئلة توضيحية عند الحاجة. " +
             "أجب دائماً بصيغة JSON نقية بدون أي نص إضافي.";
 
-        public static string RequestRefinementUser(string title, string description) =>
-            $$"""
-            حسّن هذا الطلب وأعد JSON فقط:
-            العنوان: {{title}}
-            الوصف: {{description}}
+        public static string RequestRefinementFollowUpUser(
+            string rawDescription,
+            string categories,
+            string previousQA,
+            int answersCount)
+        {
+            return $$"""
+                أنت مساعد متخصص في خدمات الصيانة المنزلية في مصر.
+                الوصف الحالي: "{rawDescription}"
+                الفئات المتاحة: {categories}
 
-            {
-              "refined_description": "<وصف محسّن>",
-              "suggested_category": "<category>",
-              "urgency": "<low|medium|high>",
-              "follow_up_questions": ["<q1>", "<q2>"],
-              "estimated_duration": "<duration>"
-            }
-            """;
+                الإجابات السابقة ({answersCount} من أصل 3 كحد أقصى):
+                {previousQA}
+
+                المطلوب:
+                - إذا كان الوصف واضحًا بما يكفي، أعد: {"question": "", "isComplete": true}
+                - إذا احتجت مزيداً من المعلومات، اسأل سؤالاً واحداً فقط بالعربية.
+                - لا تكرر سؤالاً سبق الإجابة عليه.
+
+                أعد JSON فقط:
+                {
+                  "question": "<question>",
+                  "isComplete": <true|false>
+                }
+                """;
+        }
+
+        public static string RequestRefinementUser(
+            string rawDescription,
+            string categories)
+            => $$"""
+                أنت مساعد متخصص في تحسين طلبات الصيانة المنزلية.
+                الوصف الأصلي: "{rawDescription}"
+                الفئات المتاحة: {categories}
+
+                المطلوب:
+                - أعد كتابة الوصف بشكل أوضح وأقصر بالعربية.
+                - اختر الفئة الأنسب من القائمة.
+                - قدرت مستوى الاستعجال: low / medium / high.
+                - قدم ملخصًا قصيرًا للطلب.
+
+                أعد JSON فقط:
+                {
+                  "refinedDescription": "<وصف محسّن>",
+                  "aiSummary": "<ملخص>",
+                  "suggestedCategoryId": <رقم الفئة>,
+                  "suggestedUrgency": "<low|medium|high>"
+                }
+                """;
 
         // ── Review Summarisation ──────────────────────────────────────────────
 
@@ -99,6 +134,32 @@
                 }
                 """;
         }
+
+        public static string SmartMatchingUser(
+            string title,
+            string description,
+            int customerChosenCategoryId,
+            string categoryList)
+            => $$"""
+                أنت مساعد متخصص في تصنيف طلبات الصيانة المنزلية في مصر.
+
+                الطلب:
+                العنوان: "{title}"
+                الوصف: "{description}"
+                الفئة التي اختارها العميل: {customerChosenCategoryId}
+
+                الفئات المتاحة (id:الاسم):
+                {categoryList}
+
+                المطلوب:
+                - حدد الفئة الأنسب من القائمة أعلاه.
+                - إذا كانت فئة العميل صحيحة، أعد نفس الرقم.
+                - أعد JSON فقط.
+
+                {
+                  "suggestedCategoryId": <رقم صحيح>
+                }
+                """;
 
         // ── Dispute Analysis ──────────────────────────────────────────────────
 
@@ -123,6 +184,36 @@
                   "recommended_amount": <number or null>,
                   "reasoning": "<التبرير>"
                 }
+                """;
+        }
+
+        public static string SupportChatSystem()
+        {
+            return "أنت مساعد دعم للعملاء في منصة Sala7ly. " +
+                   "أجب بصيغة واضحة ومباشرة بالعربية. " +
+                   "استخدم JSON فقط للاستجابة دون شرح إضافي.";
+        }
+
+        public static string InsightsUser(
+            int totalRequests,
+            int completedRequests,
+            int activeRequests,
+            int totalTechnicians,
+            int approvedTechnicians,
+            int totalReviews)
+        {
+            return $$"""
+                أنت محلل أداء منصة خدمات منزلية.
+                استعرض هذه الأرقام وأنشئ ملخصاً وارداً من 3 إلى 5 رؤى عملية بالعربية:
+
+                إجمالي الطلبات: {{totalRequests}}
+                الطلبات المكتملة: {{completedRequests}}
+                الطلبات النشطة: {{activeRequests}}
+                إجمالي الفنيين: {{totalTechnicians}}
+                الفنيين المعتمدين: {{approvedTechnicians}}
+                إجمالي التقييمات: {{totalReviews}}
+
+                أعد نصاً موجزاً من ثلاثة إلى خمسة نقاط واضحة، ولا ترد JSON.
                 """;
         }
     }

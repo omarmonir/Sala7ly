@@ -1,6 +1,6 @@
 ﻿using System.Text.Json;
 using Microsoft.Extensions.Configuration;
-using Sala7ly.DAL.Repositories.Abstraction;
+using Sala7ly.BLL.Services.Abstraction;
 
 namespace Sala7ly.BLL.Services.Implementation
 {

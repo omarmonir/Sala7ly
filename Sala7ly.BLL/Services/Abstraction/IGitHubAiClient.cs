@@ -1,4 +1,4 @@
-﻿namespace Sala7ly.DAL.Repositories.Abstraction
+﻿namespace Sala7ly.BLL.Services.Abstraction
 {
     public interface IGitHubAiClient
     {

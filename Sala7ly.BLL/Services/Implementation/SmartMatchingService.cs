@@ -1,12 +1,13 @@
 ﻿using Microsoft.AspNetCore.SignalR;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Sala7ly.API.Hubs;
 using Sala7ly.BLL.DTOs.AiDTOs;
+using Sala7ly.BLL.Services;
 using Sala7ly.BLL.Services.Abstraction;
 using Sala7ly.DAL.Entities;
 using Sala7ly.DAL.Enums;
 using Sala7ly.DAL.Repositories.Abstraction;
-using System.Net.Http.Json;
 using System.Text.Json;
 
 namespace Sala7ly.BLL.Services.Implementation
@@ -26,13 +27,8 @@ namespace Sala7ly.BLL.Services.Implementation
     ///   5. Also broadcasts a SignalR "NewRequestAvailable" event on BiddingHub
     ///      so technicians who are already watching the bid board see it instantly.
     /// </summary>
-    public class SmartMatchingService : ISmartMatchingService
+    public class SmartMatchingService : BaseAiService, ISmartMatchingService
     {
-        // ── GitHub Models settings (same as RequestRefinerService) ────────────
-        private const string Model = "gpt-4o-mini";
-        private const string Endpoint = "https://models.inference.ai.azure.com/chat/completions";
-
-        private readonly HttpClient _http;
         private readonly IServiceCategoryRepository _categoryRepo;
         private readonly ITechnicianProfileRepository _technicianRepo;
         private readonly IServiceRequestRepository _requestRepo;
@@ -41,15 +37,16 @@ namespace Sala7ly.BLL.Services.Implementation
         private readonly ILogger<SmartMatchingService> _logger;
 
         public SmartMatchingService(
-            IHttpClientFactory httpFactory,
+            IGitHubAiClient ai,
+            IConfiguration config,
             IServiceCategoryRepository categoryRepo,
             ITechnicianProfileRepository technicianRepo,
             IServiceRequestRepository requestRepo,
             INotificationService notificationService,
             IHubContext<BiddingHub> biddingHub,
             ILogger<SmartMatchingService> logger)
+            : base(ai, config)
         {
-            _http = httpFactory.CreateClient("GitHubModels");
             _categoryRepo = categoryRepo;
             _technicianRepo = technicianRepo;
             _requestRepo = requestRepo;
@@ -203,56 +200,26 @@ namespace Sala7ly.BLL.Services.Implementation
             int customerChosenCategoryId,
             List<string> categoryList)
         {
-            var prompt = $$"""
-                أنت مساعد متخصص في تصنيف طلبات الصيانة المنزلية في مصر.
-
-                الطلب:
-                العنوان: "{{title}}"
-                الوصف: "{{description}}"
-
-                الفئة التي اختارها العميل: {{customerChosenCategoryId}}
-
-                الفئات المتاحة (id:الاسم):
-                {{string.Join("، ", categoryList)}}
-
-                المطلوب:
-                - حدد الفئة الأنسب لهذا الطلب من القائمة أعلاه.
-                - إذا كانت فئة العميل صحيحة، أعد نفس الرقم.
-                - أعد رقم الـ id فقط بدون أي نص إضافي.
-
-                رد بـ JSON فقط:
-                {"suggestedCategoryId": <رقم صحيح>}
-                """;
+            var prompt = PromptBuilder.SmartMatchingUser(
+                title: title,
+                description: description,
+                customerChosenCategoryId: customerChosenCategoryId,
+                categoryList: string.Join("، ", categoryList));
 
             try
             {
-                var body = new
-                {
-                    model = Model,
-                    messages = new[] { new { role = "user", content = prompt } },
-                    temperature = 0.1,
-                    max_tokens = 60
-                };
+                var json = await CallAsync(
+                    model: HaikuModel,
+                    userPrompt: prompt,
+                    systemPrompt: null,
+                    maxTokens: 120);
 
-                var response = await _http.PostAsJsonAsync(Endpoint, body);
-                response.EnsureSuccessStatusCode();
-
-                var json = await response.Content.ReadAsStringAsync();
-                using var doc = JsonDocument.Parse(json);
-
-                var content = doc.RootElement
-                    .GetProperty("choices")[0]
-                    .GetProperty("message")
-                    .GetProperty("content")
-                    .GetString() ?? "";
-
-                // Strip markdown fences if the model adds them
-                content = content
-                    .Replace("```json", "")
-                    .Replace("```", "")
+                var cleaned = json
+                    .Replace("```json", string.Empty)
+                    .Replace("```", string.Empty)
                     .Trim();
 
-                using var resultDoc = JsonDocument.Parse(content);
+                using var resultDoc = JsonDocument.Parse(cleaned);
                 var categoryId = resultDoc.RootElement
                     .GetProperty("suggestedCategoryId")
                     .GetInt32();

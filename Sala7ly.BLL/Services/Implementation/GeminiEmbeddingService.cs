@@ -1,4 +1,6 @@
 ﻿using System.Net.Http.Json;
+using System.Security.Cryptography;
+using System.Text;
 using Microsoft.Extensions.Configuration;
 using Sala7ly.BLL.Services.Abstraction;
 using Sala7ly.DAL.Entities;
@@ -11,27 +13,20 @@ namespace Sala7ly.BLL.Services.Implementation
         private readonly string _apiKey;
         private readonly string _model;
 
-        public GeminiEmbeddingService(IConfiguration config)
+        public GeminiEmbeddingService(IHttpClientFactory httpFactory, IConfiguration config)
         {
-            _http = new HttpClient();
+            _http = httpFactory.CreateClient("GeminiEmbedding");
             _apiKey = config["AI:Gemini:ApiKey"]!;
             _model = config["AI:Gemini:EmbeddingModel"] ?? "gemini-embedding-001";
         }
 
         public async Task<float[]> GetEmbeddingAsync(string text)
         {
-            var url = $"https://generativelanguage.googleapis.com/v1beta/models/{_model}:embedContent?key={_apiKey}";
+            var url = $"https://generativelanguage.googleapis.com/v1beta/models/{_model}:embedText?key={_apiKey}";
 
             var requestBody = new
             {
-                model = $"models/{_model}",
-                content = new
-                {
-                    parts = new[]
-                    {
-                        new { text = text }
-                    }
-                }
+                text = text
             };
 
             var response = await _http.PostAsJsonAsync(url, requestBody);
@@ -40,7 +35,7 @@ namespace Sala7ly.BLL.Services.Implementation
             var result = await response.Content
                 .ReadFromJsonAsync<GeminiEmbeddingResponse>();
 
-            return result!.Embedding.Values;
+            return result?.Embedding?.Values ?? Array.Empty<float>();
         }
 
         public float CosineSimilarity(float[] a, float[] b)

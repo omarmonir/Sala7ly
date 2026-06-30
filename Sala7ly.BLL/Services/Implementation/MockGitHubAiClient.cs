@@ -1,4 +1,4 @@
-﻿using Sala7ly.DAL.Repositories.Abstraction;
+﻿using Sala7ly.BLL.Services.Abstraction;
 
 namespace Sala7ly.BLL.Services.Implementation
 {

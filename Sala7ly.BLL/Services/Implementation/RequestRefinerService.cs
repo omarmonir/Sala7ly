@@ -1,19 +1,18 @@
-﻿using System.Net.Http.Json;
-using System.Text.Json;
+﻿using System.Text.Json;
+using Microsoft.Extensions.Configuration;
 using Sala7ly.BLL.DTOs.AiDTOs;
+using Sala7ly.BLL.Services;
 using Sala7ly.BLL.Services.Abstraction;
 
 namespace Sala7ly.BLL.Services.Implementation
 {
-    public class RequestRefinerService : IRequestRefinerService
+    public class RequestRefinerService : BaseAiService, IRequestRefinerService
     {
-        private readonly HttpClient _http;
-        private readonly string _model = "gpt-4o-mini";  // GitHub Models
-        private readonly string _endpoint = "https://models.inference.ai.azure.com/chat/completions";
-
-        public RequestRefinerService(IHttpClientFactory factory)
+        public RequestRefinerService(
+            IGitHubAiClient ai,
+            IConfiguration config)
+            : base(ai, config)
         {
-            _http = factory.CreateClient("GitHubModels");
         }
 
         // ── Step 1: ask one follow-up question ───────────────────
@@ -26,23 +25,17 @@ namespace Sala7ly.BLL.Services.Implementation
             if (dto.PreviousAnswers.Count >= 3)
                 return new FollowUpDto { Question = "", IsComplete = true };
 
-            var prompt = $$"""
-    أنت مساعد متخصص في خدمات الصيانة المنزلية في مصر.
-    العميل كتب: "{{dto.RawDescription}}"
-    الفئات المتاحة: {{string.Join("، ", dto.Categories)}}
+            var prompt = PromptBuilder.RequestRefinementFollowUpUser(
+                rawDescription: dto.RawDescription,
+                categories: string.Join("، ", dto.Categories),
+                previousQA: previousQA,
+                answersCount: answersCount);
 
-    الإجابات السابقة ({{answersCount}} من أصل 3 كحد أقصى):
-    {{previousQA}}
-
-    قواعد صارمة:
-    - إذا وصل عدد الإجابات إلى 3 أو أكثر، أعد: {"question": "", "isComplete": true}
-    - إذا كان الوصف واضحاً بما يكفي، أعد: {"question": "", "isComplete": true}
-    - لا تكرر سؤالاً سبق الإجابة عليه
-    - إذا احتجت سؤالاً، اسأل سؤالاً واحداً جديداً فقط بالعربية
-
-    رد بـ JSON فقط: {"question": "...", "isComplete": false}
-    """;
-            var result = await CallModelAsync(prompt);
+            var result = await CallAsync(
+                model: HaikuModel,
+                userPrompt: prompt,
+                systemPrompt: PromptBuilder.RequestRefinementSystem(),
+                maxTokens: 120);
 
             try
             {
@@ -63,27 +56,15 @@ namespace Sala7ly.BLL.Services.Implementation
                 ? string.Join("\n", allAnswers.Select((a, i) => $"إجابة {i + 1}: {a}"))
                 : "";
 
-            var prompt = $$"""
-                        أنت مساعد متخصص في خدمات الصيانة المنزلية في مصر.
-                        وصف العميل الأصلي: "{{dto.RawDescription}}"
-                        {{answersBlock}}
-                        الفئات المتاحة (id:name): {{string.Join("، ", dto.Categories)}}
+            var prompt = PromptBuilder.RequestRefinementUser(
+                rawDescription: dto.RawDescription,
+                categories: string.Join("، ", dto.Categories));
 
-                        المطلوب:
-                        1. أعد كتابة الوصف بشكل احترافي وواضح بالعربية (3-5 جمل).
-                        2. اختر الفئة الأنسب من القائمة.
-                        3. حدد مستوى الاستعجال: low / medium / high.
-
-                        رد بـ JSON فقط:
-                        {
-                          "refinedDescription": "...",
-                          "aiSummary": "جملة واحدة ملخص",
-                          "suggestedCategoryId": 0,
-                          "suggestedUrgency": "medium"
-                        }
-                        """;
-
-            var raw = await CallModelAsync(prompt);
+            var raw = await CallAsync(
+                model: HaikuModel,
+                userPrompt: prompt,
+                systemPrompt: PromptBuilder.RequestRefinementSystem(),
+                maxTokens: 300);
 
             // store Q&A history as JSON
             var refinementJson = JsonSerializer.Serialize(new
@@ -127,31 +108,6 @@ namespace Sala7ly.BLL.Services.Implementation
             }
         }
 
-        // ── Internal: call GitHub Models ─────────────────────────
-        private async Task<string> CallModelAsync(string userPrompt)
-        {
-            var body = new
-            {
-                model = _model,
-                messages = new[]
-                {
-                new { role = "user", content = userPrompt }
-            },
-                temperature = 0.3,
-                max_tokens = 500
-            };
-
-            var response = await _http.PostAsJsonAsync(_endpoint, body);
-            response.EnsureSuccessStatusCode();
-
-            var json = await response.Content.ReadAsStringAsync();
-            using var doc = JsonDocument.Parse(json);
-
-            return doc.RootElement
-                .GetProperty("choices")[0]
-                .GetProperty("message")
-                .GetProperty("content")
-                .GetString()!;
-        }
+        // No direct HTTP calls; BaseAiService handles GitHub model interaction.
     }
 }

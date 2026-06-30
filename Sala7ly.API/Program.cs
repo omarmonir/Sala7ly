@@ -61,6 +61,12 @@ builder.Services.AddHttpClient("GitHubModels", client =>
         $"Bearer {builder.Configuration["GitHubModels:Token"]}");
     client.DefaultRequestHeaders.Add("Accept", "application/json");
 });
+
+builder.Services.AddHttpClient("GeminiEmbedding", client =>
+{
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+});
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())

@@ -47,6 +47,10 @@ namespace Sala7ly.BLL.Common
             services.AddScoped<IChatService, ChatService>();
             services.AddScoped<IBidService, BidService>();
             services.AddScoped<IRequestRefinerService, RequestRefinerService>();
+            services.AddScoped<IReviewSummaryService, ReviewSummaryService>();
+            services.AddScoped<IDisputeAnalysisService, DisputeAnalysisService>();
+            services.AddScoped<ISupportChatService, SupportChatService>();
+            services.AddScoped<IInsightsService, InsightsService>();
             services.AddCors(options =>
             {
                 options.AddPolicy("AllowAll", policy =>

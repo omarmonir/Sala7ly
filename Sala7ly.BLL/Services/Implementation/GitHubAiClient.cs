@@ -3,7 +3,7 @@ using Azure;
 using Microsoft.Extensions.Configuration;
 using OpenAI;
 using OpenAI.Chat;
-using Sala7ly.DAL.Repositories.Abstraction;
+using Sala7ly.BLL.Services.Abstraction;
 
 namespace Sala7ly.BLL.Services.Implementation
 {

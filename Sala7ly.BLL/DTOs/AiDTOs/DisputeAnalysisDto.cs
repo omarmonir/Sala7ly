@@ -20,7 +20,7 @@ namespace Sala7ly.BLL.DTOs.AiDTOs
         public string Recommendation { get; set; }
 
         [JsonPropertyName("recommended_amount")]
-        public decimal RecommendedAmount { get; set; }
+        public decimal? RecommendedAmount { get; set; }
 
         [JsonPropertyName("reasoning")]
         public string Reasoning { get; set; }

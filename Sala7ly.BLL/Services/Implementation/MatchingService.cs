@@ -84,7 +84,12 @@ namespace Sala7ly.BLL.Services.Implementation
 
                 final.Add(new TechnicianMatchDto
                 {
-                    Technician = item.Technician,
+                    TechnicianId = item.Technician.Id,
+                    TechnicianName = item.Technician.User?.Name ?? item.Technician.UserId,
+                    OverallRating = item.Technician.OverallRating,
+                    CompletedJobs = item.Technician.CompletedJobs,
+                    ReviewSummary = item.Technician.ReviewSummary,
+                    SentimentScore = item.Technician.SentimentScore,
                     FinalScore = blended,
                     MatchReason = GenerateMatchReason(llmScore)
                 });

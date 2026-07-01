@@ -7,7 +7,6 @@ using Sala7ly.BLL.Services.Abstraction;
 using Sala7ly.BLL.Services.Implementation;
 using Sala7ly.DAL.Common;
 using Sala7ly.DAL.Entities;
-using Sala7ly.DAL.Repositories.Abstraction;
 using Stripe;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -44,6 +43,10 @@ builder.Services.AddSwaggerGen(c =>
 });
 StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
 builder.Services.AddDistributedMemoryCache();
+
+// IGitHubAiClient now lives in Sala7ly.BLL.Services.Abstraction (was
+// incorrectly declared in the DAL, which must never own an AI-provider
+// contract), hence no DAL using is needed here anymore.
 builder.Services.AddSingleton<IGitHubAiClient>(sp =>
 {
     var config = sp.GetRequiredService<IConfiguration>();
@@ -52,15 +55,23 @@ builder.Services.AddSingleton<IGitHubAiClient>(sp =>
         ? new MockGitHubAiClient()
         : new GitHubAiClient(config);
 });
+
 builder.Services.AddDataAccessLayer(builder.Configuration);
 builder.Services.AddBusinessLogicLayer(builder.Configuration);
 builder.Services.AddScoped<IFilePathProvider, WebHostEnvironmentPathProvider>();
-builder.Services.AddHttpClient("GitHubModels", client =>
+
+// Named HttpClients used by the AI module. The old "GitHubModels" client
+// (with its own separate GitHubModels:Token config key) is gone — every
+// LLM call now goes through IGitHubAiClient / AI:GitHub:* instead.
+builder.Services.AddHttpClient("ImageDownloader", client =>
 {
-    client.DefaultRequestHeaders.Add("Authorization",
-        $"Bearer {builder.Configuration["GitHubModels:Token"]}");
-    client.DefaultRequestHeaders.Add("Accept", "application/json");
+    client.Timeout = TimeSpan.FromSeconds(15);
 });
+builder.Services.AddHttpClient("GeminiEmbeddings", client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(15);
+});
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
@@ -101,7 +112,6 @@ app.UseSwaggerUI(c =>
 
 app.UseHttpsRedirection();
 
-// Use more permissive CORS in development, stricter in production
 if (app.Environment.IsDevelopment())
 {
     app.UseCors("AllowAllDev");

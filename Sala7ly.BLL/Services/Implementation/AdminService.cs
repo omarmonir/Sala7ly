@@ -5,7 +5,7 @@ using Sala7ly.DAL.Repositories.Abstraction;
 namespace Sala7ly.BLL.Services.Implementation
 {
 
-    public partial class MatchingService
+    public partial class TechnicianMatchingService
     {
         public class AdminService : IAdminService
         {

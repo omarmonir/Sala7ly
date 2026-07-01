@@ -7,47 +7,44 @@ namespace Sala7ly.BLL.Services.Implementation
 {
     public class GeminiEmbeddingService : IEmbeddingService
     {
-        private readonly HttpClient _http;
+        private const string ClientName = "GeminiEmbeddings";
+
+        private readonly IHttpClientFactory _httpClientFactory;
         private readonly string _apiKey;
         private readonly string _model;
 
-        public GeminiEmbeddingService(IConfiguration config)
+        public GeminiEmbeddingService(IHttpClientFactory httpClientFactory, IConfiguration config)
         {
-            _http = new HttpClient();
-            _apiKey = config["AI:Gemini:ApiKey"]!;
+            _httpClientFactory = httpClientFactory;
+            _apiKey = config["AI:Gemini:ApiKey"]
+                ?? throw new InvalidOperationException("AI:Gemini:ApiKey is not configured.");
             _model = config["AI:Gemini:EmbeddingModel"] ?? "gemini-embedding-001";
         }
 
         public async Task<float[]> GetEmbeddingAsync(string text)
         {
+            var http = _httpClientFactory.CreateClient(ClientName);
             var url = $"https://generativelanguage.googleapis.com/v1beta/models/{_model}:embedContent?key={_apiKey}";
 
             var requestBody = new
             {
                 model = $"models/{_model}",
-                content = new
-                {
-                    parts = new[]
-                    {
-                        new { text = text }
-                    }
-                }
+                content = new { parts = new[] { new { text } } }
             };
 
-            var response = await _http.PostAsJsonAsync(url, requestBody);
+            var response = await http.PostAsJsonAsync(url, requestBody);
             response.EnsureSuccessStatusCode();
 
-            var result = await response.Content
-                .ReadFromJsonAsync<GeminiEmbeddingResponse>();
-
+            var result = await response.Content.ReadFromJsonAsync<GeminiEmbeddingResponse>();
             return result!.Embedding.Values;
         }
 
         public float CosineSimilarity(float[] a, float[] b)
         {
             float dot = 0, magA = 0, magB = 0;
+            var len = Math.Min(a.Length, b.Length); // was a.Length only — threw on mismatched vector sizes
 
-            for (int i = 0; i < a.Length; i++)
+            for (var i = 0; i < len; i++)
             {
                 dot += a[i] * b[i];
                 magA += a[i] * a[i];
@@ -73,13 +70,12 @@ namespace Sala7ly.BLL.Services.Implementation
                 """;
         }
 
-        // ── Response Models ───────────────────────────────────
-        private class GeminiEmbeddingResponse
+        private sealed class GeminiEmbeddingResponse
         {
             public GeminiEmbedding Embedding { get; set; } = null!;
         }
 
-        private class GeminiEmbedding
+        private sealed class GeminiEmbedding
         {
             public float[] Values { get; set; } = Array.Empty<float>();
         }

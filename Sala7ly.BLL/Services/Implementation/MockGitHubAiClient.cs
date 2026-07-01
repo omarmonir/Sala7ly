@@ -1,7 +1,16 @@
-﻿using Sala7ly.DAL.Repositories.Abstraction;
+﻿using Sala7ly.BLL.DTOs.AiDTOs;
+using Sala7ly.BLL.Services.Abstraction;
 
 namespace Sala7ly.BLL.Services.Implementation
 {
+    /// <summary>
+    /// Deterministic stand-in for <see cref="GitHubAiClient"/>, enabled via
+    /// AI:GitHub:UseMock. Every prompt built by <see cref="PromptBuilder"/>
+    /// starts with a "[TaskType: X]" marker; this mock routes off that
+    /// marker instead of guessing from natural-language content (the
+    /// previous implementation matched on Arabic substrings, which broke
+    /// the moment a prompt was reworded).
+    /// </summary>
     public class MockGitHubAiClient : IGitHubAiClient
     {
         public Task<string> CompleteAsync(
@@ -11,19 +20,26 @@ namespace Sala7ly.BLL.Services.Implementation
             int maxTokens = 500,
             List<ChatMsg>? history = null)
         {
-            if (userPrompt.Contains("refined_description") || userPrompt.Contains("حسّن"))
-                return Task.FromResult("""
-                    {
-                      "refined_description": "تسريب مياه من أسفل حوض المطبخ يحتاج إلى إصلاح عاجل",
-                      "suggested_category": "plumbing",
-                      "urgency": "high",
-                      "follow_up_questions": ["هل التسريب مستمر؟", "هل يوجد صوت طقطقة؟"],
-                      "estimated_duration": "1-2 ساعة"
-                    }
-                    """);
+            var response = ExtractTaskType(userPrompt) switch
+            {
+                "FollowUpQuestion" => """
+                    { "question": "", "isComplete": true }
+                    """,
 
-            if (userPrompt.Contains("min_price") || userPrompt.Contains("تسعير"))
-                return Task.FromResult("""
+                "RefineRequest" => """
+                    {
+                      "refinedDescription": "تسريب مياه من أسفل حوض المطبخ يحتاج إلى إصلاح عاجل",
+                      "aiSummary": "تسريب مياه يحتاج إصلاح عاجل",
+                      "suggestedCategoryId": 1,
+                      "suggestedUrgency": "high"
+                    }
+                    """,
+
+                "CategoryVerification" => """
+                    { "suggestedCategoryId": 1 }
+                    """,
+
+                "PriceEstimation" => """
                     {
                       "min_price": 200,
                       "max_price": 500,
@@ -31,10 +47,13 @@ namespace Sala7ly.BLL.Services.Implementation
                       "price_factors": ["قطع الغيار", "صعوبة الوصول"],
                       "confidence": 0.85
                     }
-                    """);
+                    """,
 
-            if (userPrompt.Contains("case_summary") || userPrompt.Contains("نزاع"))
-                return Task.FromResult("""
+                "TechnicianRerank" => """
+                    [{"index":0,"score":0.85},{"index":1,"score":0.5}]
+                    """,
+
+                "DisputeAnalysis" => """
                     {
                       "case_summary": "العميل يدعي أن العمل لم يكتمل والفني يؤكد الإتمام",
                       "timeline": ["تقديم الطلب", "قبول العرض", "بدء العمل", "رفع النزاع"],
@@ -44,20 +63,21 @@ namespace Sala7ly.BLL.Services.Implementation
                       "recommended_amount": 150,
                       "reasoning": "الأدلة تشير إلى اكتمال جزئي للعمل"
                     }
-                    """);
+                    """,
 
-            if (userPrompt.Contains("summary") || userPrompt.Contains("تقييمات"))
-                return Task.FromResult("""
+                "ReviewSummary" => """
                     {
                       "summary": "فني محترف وملتزم بالمواعيد مع خبرة جيدة في التكييف",
                       "strengths": ["الالتزام بالمواعيد", "الاحترافية", "جودة العمل"],
                       "complaints": ["السعر مرتفع أحياناً"],
                       "sentiment_score": 0.88
                     }
-                    """);
+                    """,
 
-            return Task.FromResult(
-                "مرحباً! يمكنني مساعدتك. هل تحتاج إلى معلومات إضافية؟");
+                _ => "مرحباً! يمكنني مساعدتك. هل تحتاج إلى معلومات إضافية؟"
+            };
+
+            return Task.FromResult(response);
         }
 
         public Task<string> CompleteWithImageAsync(
@@ -77,6 +97,17 @@ namespace Sala7ly.BLL.Services.Implementation
                   "confidence": 0.82
                 }
                 """);
+        }
+
+        private static string ExtractTaskType(string prompt)
+        {
+            const string marker = "[TaskType: ";
+            var start = prompt.IndexOf(marker, StringComparison.Ordinal);
+            if (start < 0) return string.Empty;
+
+            start += marker.Length;
+            var end = prompt.IndexOf(']', start);
+            return end < 0 ? string.Empty : prompt[start..end];
         }
     }
 }

@@ -14,9 +14,7 @@ namespace Sala7ly.BLL.Services.Implementation
         private readonly IAddressRepository _addressRepository;
         private readonly INotificationService _notificationService;
         private readonly ITechnicianProfileRepository _technicianProfileRepository;
-
-        
-        private readonly ISmartMatchingService _smartMatchingService;
+        private readonly IRequestDispatchService _requestDispatchService;
 
         public ServiceRequestService(
             IServiceRequestRepository serviceRequestRepository,
@@ -24,14 +22,14 @@ namespace Sala7ly.BLL.Services.Implementation
             IAddressRepository addressRepository,
             INotificationService notificationService,
             ITechnicianProfileRepository technicianProfileRepository,
-            ISmartMatchingService smartMatchingService)
+            IRequestDispatchService requestDispatchService)
         {
             _serviceRequestRepository = serviceRequestRepository;
             _customerRepository = customerRepository;
             _addressRepository = addressRepository;
             _notificationService = notificationService;
             _technicianProfileRepository = technicianProfileRepository;
-            _smartMatchingService = smartMatchingService;
+            _requestDispatchService = requestDispatchService;
         }
 
         // ── READ ──────────────────────────────────────────────────────────────
@@ -183,7 +181,7 @@ namespace Sala7ly.BLL.Services.Implementation
             // to embed in notifications.  Wrapped in its own try/catch inside
             // SmartMatchingService so a failure here never returns false to the
             // customer.
-            await _smartMatchingService.MatchAndNotifyAsync(request, userId);
+            await _requestDispatchService.MatchAndNotifyAsync(request, userId);
 
             return true;
         }

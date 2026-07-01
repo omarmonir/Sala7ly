@@ -4,7 +4,7 @@ namespace Sala7ly.BLL.Services.Abstraction
 {
     public interface IRequestRefinerService
     {
-        Task<FollowUpDto> AskFollowUpAsync(FollowUpRequestDto dto);
-        Task<RefineResultDto> RefineAsync(RefineRequestDto dto, List<string> allAnswers);
+        Task<FollowUpDto> AskFollowUpAsync(FollowUpRequestDto dto, string? userId = null);
+        Task<RefineResultDto> RefineAsync(RefineRequestDto dto, List<string> allAnswers, string? userId = null);
     }
 }

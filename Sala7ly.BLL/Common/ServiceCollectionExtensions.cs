@@ -1,5 +1,3 @@
-using System.Security.Claims;
-using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Configuration;
@@ -12,14 +10,14 @@ using Sala7ly.DAL.DataBase;
 using Sala7ly.DAL.Entities;
 using Sala7ly.DAL.Repositories.Abstraction;
 using Sala7ly.DAL.Repositories.Implementation;
-using static Sala7ly.BLL.Services.Implementation.MatchingService;
+using System.Security.Claims;
+using System.Text;
+using static Sala7ly.BLL.Services.Implementation.TechnicianMatchingService;
 
 namespace Sala7ly.BLL.Common
 {
-
     public static class ServiceCollectionExtensions
     {
-
         public static IServiceCollection AddBusinessLogicLayer(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddJwtAuthentication(configuration);
@@ -34,19 +32,22 @@ namespace Sala7ly.BLL.Common
             services.AddScoped<INotificationService, NotificationService>();
             services.AddScoped<IReviewService, ReviewService>();
 
+            // ── AI module ────────────────────────────────────────────────────
             services.AddScoped<IPriceEstimationService, PriceEstimationService>();
             services.AddScoped<IImageAnalysisService, ImageAnalysisService>();
-            services.AddScoped<IMatchingService, MatchingService>();
+            services.AddScoped<ITechnicianMatchingService, TechnicianMatchingService>();
             services.AddScoped<IEmbeddingService, GeminiEmbeddingService>();
+            services.AddScoped<IRequestRefinerService, RequestRefinerService>();
+            services.AddScoped<IRequestDispatchService, RequestDispatchService>();
+
             services.AddScoped<IWalletService, WalletService>();
             services.AddScoped<IPaymentService, PaymentService>();
             services.AddScoped<IAdminService, AdminService>();
             services.AddScoped<IFileService, FileService>();
             services.AddScoped<IServiceRequestService, ServiceRequestService>();
-            services.AddScoped<ISmartMatchingService, SmartMatchingService>();
             services.AddScoped<IChatService, ChatService>();
             services.AddScoped<IBidService, BidService>();
-            services.AddScoped<IRequestRefinerService, RequestRefinerService>();
+
             services.AddCors(options =>
             {
                 options.AddPolicy("AllowAll", policy =>
@@ -83,7 +84,6 @@ namespace Sala7ly.BLL.Common
         {
             var jwtSettings = configuration.GetSection("Jwt");
             var secretKey = jwtSettings["Key"];
-
 
             services.AddIdentity<User, IdentityRole>(options =>
             {
@@ -159,9 +159,6 @@ namespace Sala7ly.BLL.Common
             });
 
             return services;
-
         }
-
     }
-
 }

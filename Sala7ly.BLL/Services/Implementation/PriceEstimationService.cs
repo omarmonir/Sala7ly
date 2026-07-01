@@ -1,9 +1,9 @@
-﻿using System.Text.Json;
+﻿using System.Diagnostics;
+using System.Text.Json;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Sala7ly.BLL.DTOs.AiDTOs;
 using Sala7ly.BLL.Services.Abstraction;
-using Sala7ly.DAL.Entities;
 using Sala7ly.DAL.Enums;
 using Sala7ly.DAL.Repositories.Abstraction;
 
@@ -14,27 +14,25 @@ namespace Sala7ly.BLL.Services.Implementation
         private readonly IServiceRequestRepository _requestRepo;
         private readonly IBidRepository _bidRepo;
         private readonly IDistributedCache _cache;
-        private readonly IAiInteractionRepository _aiRepo;
 
         public PriceEstimationService(
-            IGitHubAiClient ai,           // ← IGitHubAiClient, not AnthropicClient
+            IGitHubAiClient ai,
             IConfiguration config,
+            IAiInteractionRepository aiInteractionRepo,
             IServiceRequestRepository requestRepo,
             IBidRepository bidRepo,
-            IDistributedCache cache,
-            IAiInteractionRepository aiRepo)
-            : base(ai, config)
+            IDistributedCache cache)
+            : base(ai, config, aiInteractionRepo)
         {
             _requestRepo = requestRepo;
             _bidRepo = bidRepo;
             _cache = cache;
-            _aiRepo = aiRepo;
         }
 
         public async Task<PriceEstimateDto> EstimateAsync(int requestId)
         {
             var request = await _requestRepo.GetByIdWithDetailsAsync(requestId)
-                ?? throw new Exception("الطلب غير موجود.");
+                ?? throw new KeyNotFoundException("الطلب غير موجود."); // was a plain Exception — controller's 404 branch never fired
 
             // ── 1. Cache check ────────────────────────────────────────────────
             var cacheKey = $"price_estimate_{request.CategoryId}" +
@@ -49,9 +47,9 @@ namespace Sala7ly.BLL.Services.Implementation
             var historicalPrices = await _bidRepo
                 .GetAcceptedPricesByCategoryAsync(request.CategoryId, limit: 50);
 
-            var avgPrice = historicalPrices.Any() ? (decimal)historicalPrices.Average() : 300m;
-            var minPrice = historicalPrices.Any() ? (decimal)historicalPrices.Min() : 150m;
-            var maxPrice = historicalPrices.Any() ? (decimal)historicalPrices.Max() : 600m;
+            var avgPrice = historicalPrices.Any() ? historicalPrices.Average() : 300m;
+            var minPrice = historicalPrices.Any() ? historicalPrices.Min() : 150m;
+            var maxPrice = historicalPrices.Any() ? historicalPrices.Max() : 600m;
 
             // ── 3. Build prompt ───────────────────────────────────────────────
             var userPrompt = PromptBuilder.PriceEstimationUser(
@@ -64,8 +62,8 @@ namespace Sala7ly.BLL.Services.Implementation
                 maxPrice: maxPrice
             );
 
-            // ── 4. Call GitHub Models (Haiku = cheapest / fastest) ───────────
-            var sw = System.Diagnostics.Stopwatch.StartNew();
+            // ── 4. Call the model (Haiku = cheapest / fastest) ────────────────
+            var sw = Stopwatch.StartNew();
             var json = await CallAsync(HaikuModel, userPrompt, maxTokens: 300);
             sw.Stop();
 
@@ -88,20 +86,16 @@ namespace Sala7ly.BLL.Services.Implementation
                     AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(ttlMinutes)
                 });
 
-            // ── 7. Log AI interaction ─────────────────────────────────────────
-            await _aiRepo.AddAsync(new Ai_Interaction
-            {
-                RequestId = requestId,
-                InteractionType = AiInteractionType.price_estimation,
-                UserId = request.Profile?.UserId ?? "",
-                ModelUsed = HaikuModel,
-                PromptSnapshot = userPrompt,
-                ResponseSnapshot = json,
-                ConfidenceScore = (float)result.Confidence,
-                LatencyMs = (int)sw.ElapsedMilliseconds,
-                CreatedOn = DateTime.UtcNow
-            });
-            await _aiRepo.SaveChangesAsync();
+            // ── 7. Log AI interaction (now shared via BaseAiService) ───────────
+            await LogInteractionAsync(
+                requestId,
+                request.Profile?.UserId,
+                AiInteractionType.price_estimation,
+                HaikuModel,
+                userPrompt,
+                json,
+                (float)result.Confidence,
+                (int)sw.ElapsedMilliseconds);
 
             return result;
         }

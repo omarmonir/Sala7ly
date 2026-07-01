@@ -5,6 +5,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Logging;
 using Sala7ly.BLL.DTOs.VerificationDTOs;
 using Sala7ly.BLL.Mapper;
 using Sala7ly.BLL.Services.Abstraction;
@@ -21,22 +22,26 @@ namespace Sala7ly.BLL.Services.Implementation
         private readonly IFilePathProvider _filePathProvider;
         private readonly INotificationService _notificationService;
         private readonly UserManager<User> _userManager;
+        private readonly IEmbeddingService _embeddingService;
+        private readonly ILogger<TechnicianVerificationService> _logger;
 
         public TechnicianVerificationService(
             ITechnicianVerificationRepository repository,
             ITechnicianProfileRepository technicianRepository,
             IFilePathProvider filePathProvider,
             INotificationService notificationService,
-            UserManager<User> userManager)
+            UserManager<User> userManager,
+            IEmbeddingService embeddingService,
+            ILogger<TechnicianVerificationService> logger)
         {
             _repository = repository;
             _technicianRepository = technicianRepository;
             _filePathProvider = filePathProvider;
             _notificationService = notificationService;
             _userManager = userManager;
+            _embeddingService = embeddingService;
+            _logger = logger;
         }
-
-        // ── Queries ──────────────────────────────────────────
 
         public async Task<VerificationDetailsDto?> GetByIdAsync(int id)
         {
@@ -56,16 +61,13 @@ namespace Sala7ly.BLL.Services.Implementation
             return list.Select(VerificationMapper.ToDetailsDto).ToList();
         }
 
-        // ── Commands ─────────────────────────────────────────
-
         public async Task<bool> SubmitAsync(SubmitVerificationDto dto, string userId)
         {
             if (dto.FrontImage is null || dto.FrontImage.Length == 0) return false;
             if (dto.BackImage is null || dto.BackImage.Length == 0) return false;
 
             var technician = await _technicianRepository.GetByUserIdAsync(userId);
-            if (technician is null)
-                return false;
+            if (technician is null) return false;
 
             var frontUrl = await SaveDocumentAsync(dto.FrontImage);
             if (frontUrl is null) return false;
@@ -101,11 +103,8 @@ namespace Sala7ly.BLL.Services.Implementation
 
             await _repository.AddAsync(verification);
             var saved = await _repository.SaveChangesAsync();
+            if (saved <= 0) return false;
 
-            if (saved <= 0)
-                return false;
-
-            // notify every admin that a new verification needs review
             var admins = await _userManager.GetUsersInRoleAsync("Admin");
             foreach (var admin in admins)
             {
@@ -124,20 +123,40 @@ namespace Sala7ly.BLL.Services.Implementation
         public async Task<bool> ApproveAsync(int verificationId, string adminId)
         {
             var verification = await _repository.GetByIdAsync(verificationId);
-            if (verification is null)
-                return false;
+            if (verification is null) return false;
 
             verification.Status = VerificationStatus.Approved;
             verification.ReviewedByAdminId = adminId;
             verification.ReviewedAt = DateTime.UtcNow;
 
             var tech = await _technicianRepository.GetByIdAsync(verification.TechnicianId);
-
             tech.IsApproved = true;
+            tech.ApprovedAt = DateTime.UtcNow;
 
             _repository.Update(verification);
             _technicianRepository.Update(tech);
             await _repository.SaveChangesAsync();
+
+            // Generate embedding immediately so this technician is matchable right away.
+            try
+            {
+                var fullProfile = await _technicianRepository.GetByIdWithCategoriesAsync(tech.Id);
+                if (fullProfile is not null)
+                {
+                    var text = _embeddingService.BuildTechnicianText(fullProfile);
+                    fullProfile.EmbeddingVector = await _embeddingService.GetEmbeddingAsync(text);
+                    fullProfile.EmbeddingUpdatedAt = DateTime.UtcNow;
+                    _technicianRepository.Update(fullProfile);
+                    await _technicianRepository.SaveChangesAsync();
+                    _logger.LogInformation("Embedding generated for newly approved technician {Id}.", tech.Id);
+                }
+            }
+            catch (Exception ex)
+            {
+                // Non-fatal — background sync job will retry.
+                _logger.LogWarning(ex,
+                    "Failed to generate embedding for technician {Id} on approval. Background sync will retry.", tech.Id);
+            }
 
             return true;
         }
@@ -145,8 +164,7 @@ namespace Sala7ly.BLL.Services.Implementation
         public async Task<bool> RejectAsync(RejectVerificationDto dto, string adminId)
         {
             var verification = await _repository.GetByIdAsync(dto.VerificationId);
-            if (verification is null)
-                return false;
+            if (verification is null) return false;
 
             verification.Status = VerificationStatus.Rejected;
             verification.RejectionReason = dto.RejectionReason;
@@ -158,18 +176,14 @@ namespace Sala7ly.BLL.Services.Implementation
             return true;
         }
 
-        // ── Helpers ──────────────────────────────────────────
-
         private async Task<string?> SaveDocumentAsync(IFormFile file)
         {
             var allowedExtensions = new[] { ".jpg", ".jpeg", ".png", ".pdf" };
             var extension = Path.GetExtension(file.FileName).ToLowerInvariant();
-            if (!allowedExtensions.Contains(extension))
-                return null;
+            if (!allowedExtensions.Contains(extension)) return null;
 
             const long maxSize = 5 * 1024 * 1024;
-            if (file.Length > maxSize)
-                return null;
+            if (file.Length > maxSize) return null;
 
             var webRoot = _filePathProvider.GetWebRootPath();
             var uploadsFolder = Path.Combine(webRoot, "uploads", "verifications");
@@ -179,9 +193,7 @@ namespace Sala7ly.BLL.Services.Implementation
             var fullPath = Path.Combine(uploadsFolder, fileName);
 
             using (var stream = new FileStream(fullPath, FileMode.Create))
-            {
                 await file.CopyToAsync(stream);
-            }
 
             return $"/uploads/verifications/{fileName}";
         }

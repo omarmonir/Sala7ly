@@ -5,7 +5,6 @@ using Sala7ly.BLL.DTOs.AiDTOs;
 using Sala7ly.BLL.Services.Abstraction;
 using Sala7ly.DAL.Repositories.Abstraction;
 
-
 namespace Sala7ly.API.Controllers
 {
     [ApiController]
@@ -17,10 +16,14 @@ namespace Sala7ly.API.Controllers
         private readonly IServiceCategoryRepository _categoryRepo;
         private readonly IPriceEstimationService _priceService;
         private readonly IImageAnalysisService _imageService;
-        private readonly IMatchingService _matchingService;
-        public AiController(IRequestRefinerService refiner, IServiceCategoryRepository categoryRepo, IPriceEstimationService priceService,
+        private readonly ITechnicianMatchingService _matchingService;
+
+        public AiController(
+            IRequestRefinerService refiner,
+            IServiceCategoryRepository categoryRepo,
+            IPriceEstimationService priceService,
             IImageAnalysisService imageService,
-            IMatchingService matchingService)
+            ITechnicianMatchingService matchingService)
         {
             _refiner = refiner;
             _categoryRepo = categoryRepo;
@@ -33,30 +36,48 @@ namespace Sala7ly.API.Controllers
         [HttpPost("ask-followup")]
         public async Task<IActionResult> AskFollowUp([FromBody] FollowUpRequestDto dto)
         {
-            if (dto.Categories.Count == 0)
-                dto.Categories = await GetCategoryListAsync();
+            if (dto is null) return BadRequest(new { message = "الطلب فارغ." });
 
-            var result = await _refiner.AskFollowUpAsync(dto);
-            return Ok(result);
+            try
+            {
+                if (dto.Categories.Count == 0)
+                    dto.Categories = await GetCategoryListAsync();
+
+                var result = await _refiner.AskFollowUpAsync(dto, CurrentUserId);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "فشل توليد سؤال المتابعة.", detail = ex.Message });
+            }
         }
 
         // POST /api/ai/refine-request
         [HttpPost("refine-request")]
-        public async Task<IActionResult> RefineRequest(
-            [FromBody] RefineRequestWithAnswersDto dto)
+        public async Task<IActionResult> RefineRequest([FromBody] RefineRequestWithAnswersDto dto)
         {
-            if (dto.Categories.Count == 0)
-                dto.Categories = await GetCategoryListAsync();
+            if (dto is null) return BadRequest(new { message = "الطلب فارغ." });
 
-            var refineDto = new RefineRequestDto
+            try
             {
-                RawDescription = dto.RawDescription,
-                Categories = dto.Categories
-            };
+                if (dto.Categories.Count == 0)
+                    dto.Categories = await GetCategoryListAsync();
 
-            var result = await _refiner.RefineAsync(refineDto, dto.AllAnswers);
-            return Ok(result);
+                var refineDto = new RefineRequestDto
+                {
+                    RawDescription = dto.RawDescription,
+                    Categories = dto.Categories
+                };
+
+                var result = await _refiner.RefineAsync(refineDto, dto.AllAnswers, CurrentUserId);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "فشل تحسين الطلب.", detail = ex.Message });
+            }
         }
+
         [HttpPost("price-estimate/{requestId:int}")]
         public async Task<IActionResult> EstimatePrice(int requestId)
         {
@@ -67,50 +88,58 @@ namespace Sala7ly.API.Controllers
             }
             catch (KeyNotFoundException ex)
             {
-                // Service threw this when GetByIdWithDetailsAsync returned null
                 return NotFound(new { message = ex.Message });
             }
             catch (Exception ex)
             {
-                // AI timeout, network error, JSON parse failure, etc.
                 return StatusCode(500, new { message = "فشل تقدير السعر.", detail = ex.Message });
             }
         }
+
         [HttpPost("analyze-image")]
-        public async Task<IActionResult> AnalyzeImage([FromBody] AnalyzeImageRequestDto dto)
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> AnalyzeImage([FromForm] AnalyzeImageRequestDto dto)
         {
+            if (dto.Image == null || dto.Image.Length == 0)
+                return BadRequest(new { message = "الصورة مطلوبة." });
+
             try
             {
-                if (string.IsNullOrWhiteSpace(dto.Base64Image))
-                    return BadRequest(new { message = "الصورة مطلوبة." });
+                using var ms = new MemoryStream();
+                await dto.Image.CopyToAsync(ms);
+
+                var base64Image = Convert.ToBase64String(ms.ToArray());
 
                 var result = await _imageService.AnalyzeImageAsync(
-                    dto.Base64Image,
-                    dto.MediaType ?? "image/jpeg");
+                    base64Image,
+                    dto.Image.ContentType);
 
                 return Ok(result);
             }
             catch (Exception ex)
             {
-                return StatusCode(500, new { message = "فشل تحليل الصورة.", detail = ex.Message });
+                return StatusCode(500, new
+                {
+                    message = "فشل تحليل الصورة.",
+                    detail = ex.Message
+                });
             }
         }
+
         [HttpPost("analyze-request-images/{requestId:int}")]
         public async Task<IActionResult> AnalyzeRequestImages(
-                 int requestId,
-                 [FromBody] AnalyzeRequestImagesDto dto)
+            int requestId,
+            [FromBody] AnalyzeRequestImagesDto dto)
         {
+            if (dto?.ImageUrls == null || !dto.ImageUrls.Any())
+                return BadRequest(new { message = "يجب إرسال رابط صورة واحد على الأقل." });
+
             try
             {
-                if (dto.ImageUrls == null || !dto.ImageUrls.Any())
-                    return BadRequest(new { message = "يجب إرسال رابط صورة واحد على الأقل." });
-
-                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
-
                 var result = await _imageService.AnalyzeMultipleImagesAsync(
                     requestId,
                     dto.ImageUrls,
-                    userId);
+                    CurrentUserId);
 
                 return Ok(result);
             }
@@ -123,6 +152,7 @@ namespace Sala7ly.API.Controllers
                 return StatusCode(500, new { message = "فشل تحليل الصور.", detail = ex.Message });
             }
         }
+
         [HttpPost("match/{requestId:int}")]
         public async Task<IActionResult> MatchTechnicians(int requestId, [FromQuery] int topN = 10)
         {
@@ -144,11 +174,13 @@ namespace Sala7ly.API.Controllers
                 return StatusCode(500, new { message = "فشلت عملية المطابقة.", detail = ex.Message });
             }
         }
+
+        private string? CurrentUserId => User.FindFirstValue(ClaimTypes.NameIdentifier);
+
         private async Task<List<string>> GetCategoryListAsync()
         {
             var cats = await _categoryRepo.GetAllAsync();
             return cats.Select(c => $"{c.Id}:{c.NameAr}").ToList();
         }
-
     }
 }

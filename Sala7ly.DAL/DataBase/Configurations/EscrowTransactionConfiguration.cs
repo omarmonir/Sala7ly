@@ -43,6 +43,12 @@ namespace Sala7ly.DAL.DataBase.Configurations
                    .HasForeignKey(e => e.TechnicianId)
                    .OnDelete(DeleteBehavior.Restrict);
 
+            builder.HasOne(e => e.Dispute)
+                   .WithMany()
+                   .HasForeignKey(e => e.DisputeId)
+                   .OnDelete(DeleteBehavior.Restrict)
+                   .IsRequired(false);
+
             builder.HasMany(e => e.WalletTransactions)
                    .WithOne(wt => wt.EscrowTransaction)
                    .HasForeignKey(wt => wt.EscrowTransactionId)

@@ -135,17 +135,18 @@ namespace Sala7ly.BLL.Services.Implementation
         {
             var escrow = await _escrowRepo.GetByProviderRefAsync(paymentIntentId);
             if (escrow == null || escrow.Status != EscrowStatus.PendingDeposit)
-                return; 
+                return;
 
             escrow.MarkDeposited(chargeId);
             await _escrowRepo.SaveChangesAsync();
 
-            // Update request status
+            // Update request status only if still assigned.
             var request = await _requestRepo.GetByIdAsync(escrow.ServiceRequestId);
-            request?.Start();
-            await _requestRepo.SaveChangesAsync();
-
-
+            if (request != null && request.Status == Status.assigned)
+            {
+                request.Start();
+                await _requestRepo.SaveChangesAsync();
+            }
         }
 
         public async Task HandlePaymentReleasedAsync(string paymentIntentId)
@@ -161,6 +162,7 @@ namespace Sala7ly.BLL.Services.Implementation
                 userId: escrow.Technician.UserId,
                 amount: escrow.TechnicianPayout,
                 description: $"أرباح طلب رقم #{escrow.ServiceRequestId}",
+                type: WalletTransactionType.payout,
                 escrowId: escrow.Id
             );
 
@@ -185,6 +187,7 @@ namespace Sala7ly.BLL.Services.Implementation
                 userId: escrow.Customer.UserId,
                 amount: escrow.Amount,
                 description: $"استرداد طلب رقم #{escrow.ServiceRequestId}",
+                type: WalletTransactionType.refund,
                 escrowId: escrow.Id
             );
 

@@ -21,7 +21,7 @@ namespace Sala7ly.DAL.Entities
 
         public string Description { get; set; }
 
-        public string Reference { get; set; }
+        public string? Reference { get; set; }
 
 
         // NP

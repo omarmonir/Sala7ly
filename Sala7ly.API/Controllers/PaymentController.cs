@@ -14,11 +14,13 @@ namespace Sala7ly.API.Controllers
     public class PaymentController : ControllerBase
     {
         private readonly IPaymentService _paymentService;
+        private readonly IWalletService _walletService;
         private readonly IConfiguration _config;
 
-        public PaymentController(IPaymentService paymentService, IConfiguration config)
+        public PaymentController(IPaymentService paymentService, IWalletService walletService, IConfiguration config)
         {
             _paymentService = paymentService;
+            _walletService = walletService;
             _config = config;
         }
 
@@ -131,7 +133,21 @@ namespace Sala7ly.API.Controllers
                     case "payment_intent.succeeded":
                         {
                             var intent = stripeEvent.Data.Object as PaymentIntent;
-                            await _paymentService.HandlePaymentReleasedAsync(intent!.Id);
+                            if (intent == null)
+                                break;
+
+                            var paymentType = intent.Metadata?.ContainsKey("payment_type") == true
+                                ? intent.Metadata["payment_type"]
+                                : null;
+
+                            if (paymentType == "wallet_topup")
+                            {
+                                await _walletService.HandleStripePaymentIntentSucceededAsync(intent);
+                            }
+                            else
+                            {
+                                await _paymentService.HandlePaymentReleasedAsync(intent.Id);
+                            }
                             break;
                         }
 
@@ -139,7 +155,11 @@ namespace Sala7ly.API.Controllers
                     case "charge.refunded":
                         {
                             var charge = stripeEvent.Data.Object as Charge;
-                            await _paymentService.HandlePaymentRefundedAsync(charge!.PaymentIntentId);
+                            if (charge == null)
+                                break;
+
+                            await _paymentService.HandlePaymentRefundedAsync(charge.PaymentIntentId);
+                            await _walletService.HandleStripeChargeRefundedAsync(charge);
                             break;
                         }
                 }

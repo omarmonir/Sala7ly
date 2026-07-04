@@ -41,8 +41,8 @@ namespace Sala7ly.API.Controllers
         {
             try
             {
-                await _walletService.TopUpAsync(CurrentUserId, dto);
-                return Ok(new ApiResponse<string> { Success = true, Message = "تم شحن المحفظة بنجاح" });
+                var result = await _walletService.TopUpAsync(CurrentUserId, dto);
+                return Ok(new ApiResponse<TopUpResultDto> { Success = true, Data = result });
             }
             catch (Exception ex)
             {

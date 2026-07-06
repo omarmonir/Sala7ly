@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging;
 using Stripe;
 using Sala7ly.BLL.DTOs.WalletDTOs;
 using Sala7ly.BLL.Mapper;
@@ -17,15 +19,21 @@ namespace Sala7ly.BLL.Services.Implementation
         private readonly IWalletRepository _walletRepo;
         private readonly IWalletTransactionRepository _transactionRepo;
         private readonly INotificationService _notificationService;
+        private readonly IConfiguration _config;
+        private readonly ILogger<WalletService> _logger;
 
         public WalletService(
             IWalletRepository walletRepo,
             IWalletTransactionRepository transactionRepo,
-            INotificationService notificationService)
+            INotificationService notificationService,
+            IConfiguration config,
+            ILogger<WalletService> logger)
         {
             _walletRepo = walletRepo;
             _transactionRepo = transactionRepo;
             _notificationService = notificationService;
+            _config = config;
+            _logger = logger;
         }
 
         public async Task<WalletDto> GetWalletAsync(string userId, int page, int pageSize)
@@ -45,30 +53,118 @@ namespace Sala7ly.BLL.Services.Implementation
 
             await GetOrCreateWalletAsync(userId);
 
-            var options = new PaymentIntentCreateOptions
+            var frontendBaseUrl = _config["FrontendUrl"] ?? _config["App:FrontendUrl"] ?? "https://sala7ly.runasp.net";
+            var successUrl = $"{frontendBaseUrl}/customer/wallet?payment=success&session_id={{CHECKOUT_SESSION_ID}}";
+            var cancelUrl = $"{frontendBaseUrl}/customer/wallet?payment=cancel";
+
+            var options = new Stripe.Checkout.SessionCreateOptions
             {
-                Amount = (long)(dto.Amount * 100),
-                Currency = "egp",
-                PaymentMethod = dto.PaymentMethodId,
-                ConfirmationMethod = "automatic",
-                Confirm = true,
+                Mode = "payment",
+                SuccessUrl = successUrl,
+                CancelUrl = cancelUrl,
                 PaymentMethodTypes = new List<string> { "card" },
+                LineItems = new List<Stripe.Checkout.SessionLineItemOptions>
+                {
+                    new()
+                    {
+                        PriceData = new Stripe.Checkout.SessionLineItemPriceDataOptions
+                        {
+                            Currency = "egp",
+                            UnitAmount = (long)(dto.Amount * 100),
+                            ProductData = new Stripe.Checkout.SessionLineItemPriceDataProductDataOptions
+                            {
+                                Name = "شحن محفظة Sala7ly"
+                            }
+                        },
+                        Quantity = 1
+                    }
+                },
                 Metadata = new Dictionary<string, string>
                 {
                     { "payment_type", "wallet_topup" },
                     { "user_id", userId }
+                },
+                PaymentIntentData = new Stripe.Checkout.SessionPaymentIntentDataOptions
+                {
+                    Metadata = new Dictionary<string, string>
+                    {
+                        { "payment_type", "wallet_topup" },
+                        { "user_id", userId }
+                    }
                 }
             };
 
-            var service = new PaymentIntentService();
-            var intent = await service.CreateAsync(options);
+            var service = new Stripe.Checkout.SessionService();
+            var session = await service.CreateAsync(options);
+
+            _logger?.LogInformation("Created Stripe checkout session {SessionId} for user {UserId} amount {Amount}", session?.Id, userId, dto.Amount);
 
             return new TopUpResultDto
             {
-                ClientSecret = intent.ClientSecret,
-                PaymentIntentId = intent.Id,
+                ClientSecret = session.Id,
+                PaymentIntentId = session.PaymentIntentId,
+                CheckoutUrl = session.Url,
+                SessionId = session.Id,
                 Amount = dto.Amount
             };
+        }
+
+        public async Task<bool> ConfirmTopUpAsync(string sessionId, string currentUserId)
+        {
+            if (string.IsNullOrWhiteSpace(sessionId))
+                return false;
+            try
+            {
+                var sessionService = new Stripe.Checkout.SessionService();
+                var session = await sessionService.GetAsync(sessionId);
+                if (session == null)
+                {
+                    _logger?.LogWarning("ConfirmTopUp: session not found {SessionId}", sessionId);
+                    return false;
+                }
+
+                if (string.IsNullOrWhiteSpace(session.PaymentIntentId))
+                {
+                    _logger?.LogWarning("ConfirmTopUp: session {SessionId} has no PaymentIntentId", sessionId);
+                    return false;
+                }
+
+                var paymentIntentService = new Stripe.PaymentIntentService();
+                var paymentIntent = await paymentIntentService.GetAsync(session.PaymentIntentId);
+                if (paymentIntent == null)
+                {
+                    _logger?.LogWarning("ConfirmTopUp: payment intent not found {PaymentIntentId}", session.PaymentIntentId);
+                    return false;
+                }
+
+                _logger?.LogInformation("ConfirmTopUp: session {SessionId} paymentIntent {PaymentIntentId} status {Status} amount_received {AmountReceived}", sessionId, paymentIntent.Id, paymentIntent.Status, paymentIntent.AmountReceived);
+
+                // Validate that the session/payment belongs to the currently authenticated user
+                if (paymentIntent.Metadata != null && paymentIntent.Metadata.TryGetValue("user_id", out var userId))
+                {
+                    if (!string.Equals(userId, currentUserId, StringComparison.OrdinalIgnoreCase))
+                    {
+                        _logger?.LogWarning("ConfirmTopUp: payment intent user_id {UserId} does not match current user {CurrentUser}", userId, currentUserId);
+                        return false;
+                    }
+                }
+
+                // If payment succeeded, process the credit logic (idempotent inside)
+                if (string.Equals(paymentIntent.Status, "succeeded", StringComparison.OrdinalIgnoreCase) || string.Equals(paymentIntent.Status, "requires_capture", StringComparison.OrdinalIgnoreCase) || paymentIntent.AmountReceived > 0)
+                {
+                    await HandleStripePaymentIntentSucceededAsync(paymentIntent);
+                    _logger?.LogInformation("ConfirmTopUp: processed top-up for session {SessionId}", sessionId);
+                    return true;
+                }
+
+                _logger?.LogWarning("ConfirmTopUp: payment intent {PaymentIntentId} not paid yet. Status={Status} AmountReceived={AmountReceived}", paymentIntent.Id, paymentIntent.Status, paymentIntent.AmountReceived);
+                return false;
+            }
+            catch (Exception ex)
+            {
+                _logger?.LogError(ex, "ConfirmTopUp: exception while confirming session {SessionId}", sessionId);
+                return false;
+            }
         }
 
         public async Task WithdrawAsync(string userId, WithdrawDto dto)
@@ -220,21 +316,47 @@ namespace Sala7ly.BLL.Services.Implementation
 
         public async Task HandleStripePaymentIntentSucceededAsync(PaymentIntent intent)
         {
-            if (intent == null || intent.Metadata == null)
+            if (intent == null)
+            {
+                _logger?.LogWarning("HandleStripePaymentIntentSucceededAsync called with null intent");
                 return;
+            }
+
+            _logger?.LogInformation("HandleStripePaymentIntentSucceededAsync: intent {Id} status {Status} amount_received {AmountReceived}", intent.Id, intent.Status, intent.AmountReceived);
+
+            if (intent.Metadata == null)
+            {
+                _logger?.LogWarning("PaymentIntent {Id} has no metadata", intent.Id);
+                return;
+            }
 
             if (!intent.Metadata.TryGetValue("payment_type", out var paymentType) || paymentType != "wallet_topup")
+            {
+                _logger?.LogInformation("PaymentIntent {Id} payment_type {PaymentType} ignored", intent.Id, paymentType);
                 return;
+            }
 
             if (!intent.Metadata.TryGetValue("user_id", out var userId))
+            {
+                _logger?.LogWarning("PaymentIntent {Id} missing user_id metadata", intent.Id);
                 return;
+            }
 
             var wallet = await GetOrCreateWalletAsync(userId);
             var reference = intent.Id;
             if (await _transactionRepo.ExistsByReferenceAsync(reference, WalletTransactionType.deposit, wallet.Id))
+            {
+                _logger?.LogInformation("PaymentIntent {Id} already processed for wallet {WalletId}", intent.Id, wallet.Id);
                 return;
+            }
 
             var amount = intent.AmountReceived / 100m;
+            if (amount <= 0)
+            {
+                _logger?.LogWarning("PaymentIntent {Id} amount received is zero", intent.Id);
+                return;
+            }
+
             wallet.Balance += amount;
 
             var tx = new WalletTransaction
@@ -250,6 +372,8 @@ namespace Sala7ly.BLL.Services.Implementation
 
             await _transactionRepo.AddAsync(tx);
             await _walletRepo.SaveChangesAsync();
+
+            _logger?.LogInformation("Credited wallet {WalletId} user {UserId} amount {Amount}", wallet.Id, userId, amount);
 
             await _notificationService.NotifyUserAsync(
                 userId,

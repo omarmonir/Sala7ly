@@ -14,5 +14,6 @@ namespace Sala7ly.BLL.Services.Abstraction
         Task DebitAsync(string userId, decimal amount, string description, WalletTransactionType type, int? escrowId = null);
         Task HandleStripePaymentIntentSucceededAsync(PaymentIntent intent);
         Task HandleStripeChargeRefundedAsync(Charge charge);
+        Task<bool> ConfirmTopUpAsync(string sessionId, string currentUserId);
     }
 }

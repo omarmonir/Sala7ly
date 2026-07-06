@@ -113,6 +113,9 @@
                 {{answersBlock}}
                 الفئات المتاحة (id:name): {{string.Join("، ", categories)}}
 
+                الإجابات السابقة ({answersCount} من أصل 3 كحد أقصى):
+                {previousQA}
+
                 المطلوب:
                 1. أعد كتابة الوصف بشكل احترافي وواضح بالعربية (3-5 جمل).
                 2. اختر الفئة الأنسب من القائمة.
@@ -198,6 +201,32 @@
                 }
                 """;
         }
+
+        public static string SmartMatchingUser(
+            string title,
+            string description,
+            int customerChosenCategoryId,
+            string categoryList)
+            => $$"""
+                أنت مساعد متخصص في تصنيف طلبات الصيانة المنزلية في مصر.
+
+                الطلب:
+                العنوان: "{title}"
+                الوصف: "{description}"
+                الفئة التي اختارها العميل: {customerChosenCategoryId}
+
+                الفئات المتاحة (id:الاسم):
+                {categoryList}
+
+                المطلوب:
+                - حدد الفئة الأنسب من القائمة أعلاه.
+                - إذا كانت فئة العميل صحيحة، أعد نفس الرقم.
+                - أعد JSON فقط.
+
+                {
+                  "suggestedCategoryId": <رقم صحيح>
+                }
+                """;
 
         // ── Dispute Analysis (prompt ready; no service wired up yet) ───────────
 

@@ -3,6 +3,7 @@ using System.Text.Encodings.Web;
 using System.Text.Json;
 using Microsoft.Extensions.Configuration;
 using Sala7ly.BLL.DTOs.AiDTOs;
+using Sala7ly.BLL.Services;
 using Sala7ly.BLL.Services.Abstraction;
 using Sala7ly.DAL.Enums;
 using Sala7ly.DAL.Repositories.Abstraction;

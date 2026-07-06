@@ -1,4 +1,4 @@
-﻿namespace Sala7ly.BLL.Services.Implementation
+﻿namespace Sala7ly.BLL.Services
 {
     /// <summary>
     /// Central place for every AI prompt string. Keeps services thin and
@@ -223,6 +223,36 @@
                   "recommended_amount": <number or null>,
                   "reasoning": "<التبرير>"
                 }
+                """;
+        }
+
+        public static string SupportChatSystem()
+        {
+            return "أنت مساعد دعم للعملاء في منصة Sala7ly. " +
+                   "أجب بصيغة واضحة ومباشرة بالعربية. " +
+                   "استخدم JSON فقط للاستجابة دون شرح إضافي.";
+        }
+
+        public static string InsightsUser(
+            int totalRequests,
+            int completedRequests,
+            int activeRequests,
+            int totalTechnicians,
+            int approvedTechnicians,
+            int totalReviews)
+        {
+            return $$"""
+                أنت محلل أداء منصة خدمات منزلية.
+                استعرض هذه الأرقام وأنشئ ملخصاً وارداً من 3 إلى 5 رؤى عملية بالعربية:
+
+                إجمالي الطلبات: {{totalRequests}}
+                الطلبات المكتملة: {{completedRequests}}
+                الطلبات النشطة: {{activeRequests}}
+                إجمالي الفنيين: {{totalTechnicians}}
+                الفنيين المعتمدين: {{approvedTechnicians}}
+                إجمالي التقييمات: {{totalReviews}}
+
+                أعد نصاً موجزاً من ثلاثة إلى خمسة نقاط واضحة، ولا ترد JSON.
                 """;
         }
     }

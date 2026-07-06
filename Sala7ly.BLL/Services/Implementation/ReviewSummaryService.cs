@@ -1,4 +1,9 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text.Json;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 using Sala7ly.BLL.DTOs.AiDTOs;
 using Sala7ly.BLL.Services.Abstraction;
 using Sala7ly.DAL.Entities;
@@ -14,9 +19,9 @@ namespace Sala7ly.BLL.Services.Implementation
         private readonly IAiInteractionRepository _aiRepo;
 
         public ReviewSummaryService(
-     IGitHubAiClient ai,
-     IConfiguration config,
-     IReviewRepository reviewRepo,
+            IGitHubAiClient ai,
+            IConfiguration config,
+            IReviewRepository reviewRepo,
      ITechnicianProfileRepository technicianRepo,
      IAiInteractionRepository aiRepo)
      : base(ai, config, aiRepo)

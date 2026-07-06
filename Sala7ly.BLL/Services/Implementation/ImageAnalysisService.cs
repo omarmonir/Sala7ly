@@ -1,7 +1,11 @@
 ﻿using System.Diagnostics;
+using System.IO;
 using System.Text.Json;
+using System.Threading.Tasks;
+using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Sala7ly.BLL.DTOs.AiDTOs;
+using Sala7ly.BLL.Services;
 using Sala7ly.BLL.Services.Abstraction;
 using Sala7ly.DAL.Enums;
 using Sala7ly.DAL.Repositories.Abstraction;
@@ -46,6 +50,23 @@ namespace Sala7ly.BLL.Services.Implementation
             var result = ParseJson<ImageAnalysisDto>(raw);
             result.LatencyMs = (int)sw.ElapsedMilliseconds;
             return result;
+        }
+
+        /// <summary>
+        /// Analyse an image uploaded as IFormFile. Converts the file to
+        /// base64 and delegates to AnalyzeImageAsync.
+        /// </summary>
+        public async Task<ImageAnalysisDto> AnalyzeImageFromFormFileAsync(IFormFile file)
+        {
+            if (file == null || file.Length == 0)
+                throw new ArgumentException("يجب تقديم صورة صالحة.");
+
+            using var ms = new MemoryStream();
+            await file.CopyToAsync(ms);
+            var base64 = Convert.ToBase64String(ms.ToArray());
+            var mediaType = file.ContentType ?? "image/jpeg";
+
+            return await AnalyzeImageAsync(base64, mediaType);
         }
 
         /// <summary>

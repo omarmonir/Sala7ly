@@ -22,6 +22,7 @@ namespace Sala7ly.BLL.Common
         {
             services.AddJwtAuthentication(configuration);
             services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IAiSupportService, AiSupportService>();
             services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<ICustomerService, CustomerService>();
             services.AddScoped<IServiceCategoryService, ServiceCategoryService>();

@@ -59,6 +59,14 @@ namespace Sala7ly.BLL.Services.Implementation
 
             await _transactionRepo.AddAsync(tx);
             await _transactionRepo.SaveChangesAsync();
+
+            // notify: money received
+            await _notificationService.NotifyUserAsync(
+                userId: userId,
+                type: NotificationType.payment,
+                title: "تم إضافة رصيد 💰",
+                body: $"تم إضافة {amount:0.##} ج.م إلى محفظتك. {description}",
+                metadata: $"{{\"amount\": {amount}, \"balance\": {wallet.Balance}}}");
         }
 
         public async Task DebitAsync(string userId, decimal amount, string description, int? escrowId = null)
@@ -84,6 +92,14 @@ namespace Sala7ly.BLL.Services.Implementation
 
             await _transactionRepo.AddAsync(tx);
             await _transactionRepo.SaveChangesAsync();
+
+            // notify: money deducted
+            await _notificationService.NotifyUserAsync(
+                userId: userId,
+                type: NotificationType.payment,
+                title: "تم خصم رصيد",
+                body: $"تم خصم {amount:0.##} ج.م من محفظتك. {description}",
+                metadata: $"{{\"amount\": {amount}, \"balance\": {wallet.Balance}}}");
         }
 
         public async Task TopUpAsync(string userId, TopUpDto dto)
@@ -108,7 +124,13 @@ namespace Sala7ly.BLL.Services.Implementation
             await _transactionRepo.AddAsync(tx);
             await _transactionRepo.SaveChangesAsync();
 
-          
+            // notify: wallet topped up
+            await _notificationService.NotifyUserAsync(
+                userId: userId,
+                type: NotificationType.payment,
+                title: "تم شحن المحفظة ✅",
+                body: $"تم شحن محفظتك بمبلغ {dto.Amount:0.##} ج.م بنجاح.",
+                metadata: $"{{\"amount\": {dto.Amount}, \"balance\": {wallet.Balance}}}");
         }
 
         public async Task WithdrawAsync(string userId, WithdrawDto dto)
@@ -135,7 +157,13 @@ namespace Sala7ly.BLL.Services.Implementation
             await _transactionRepo.AddAsync(tx);
             await _transactionRepo.SaveChangesAsync();
 
+            // notify: withdrawal processed
+            await _notificationService.NotifyUserAsync(
+                userId: userId,
+                type: NotificationType.payment,
+                title: "تم طلب سحب رصيد",
+                body: $"تم سحب {dto.Amount:0.##} ج.م إلى {dto.BankAccount}.",
+                metadata: $"{{\"amount\": {dto.Amount}, \"balance\": {wallet.Balance}}}");
         }
     }
-
 }

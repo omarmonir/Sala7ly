@@ -63,6 +63,4 @@ namespace Sala7ly.API.Hubs
 
         private static string GroupName(int requestId) => $"request_{requestId}";
     }
-
-
 }

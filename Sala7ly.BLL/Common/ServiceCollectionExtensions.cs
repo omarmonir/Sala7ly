@@ -12,29 +12,42 @@ using Sala7ly.DAL.Repositories.Abstraction;
 using Sala7ly.DAL.Repositories.Implementation;
 using System.Security.Claims;
 using System.Text;
+using static Sala7ly.BLL.Services.Implementation.TechnicianMatchingService;
 
 namespace Sala7ly.BLL.Common
 {
-
     public static class ServiceCollectionExtensions
     {
-
         public static IServiceCollection AddBusinessLogicLayer(this IServiceCollection services, IConfiguration configuration)
         {
             services.AddJwtAuthentication(configuration);
             services.AddScoped<IAuthService, AuthService>();
+            services.AddScoped<IAiSupportService, AiSupportService>();
             services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<ICustomerService, CustomerService>();
             services.AddScoped<IServiceCategoryService, ServiceCategoryService>();
             services.AddScoped<ITechnicianService, TechnicianService>();
             services.AddScoped<ITechnicianPortfolioService, TechnicianPortfolioService>();
-
+            services.AddScoped<ITechnicianVerificationService, TechnicianVerificationService>();
             services.AddScoped<IAddressService, AddressService>();
+            services.AddScoped<INotificationService, NotificationService>();
+            services.AddScoped<IReviewService, ReviewService>();
 
+            // ── AI module ────────────────────────────────────────────────────
+            services.AddScoped<IPriceEstimationService, PriceEstimationService>();
+            services.AddScoped<IImageAnalysisService, ImageAnalysisService>();
+            services.AddScoped<ITechnicianMatchingService, TechnicianMatchingService>();
+            services.AddScoped<IEmbeddingService, GeminiEmbeddingService>();
+            services.AddScoped<IRequestRefinerService, RequestRefinerService>();
+            services.AddScoped<IRequestDispatchService, RequestDispatchService>();
 
+            services.AddScoped<IWalletService, WalletService>();
+            services.AddScoped<IPaymentService, PaymentService>();
+            services.AddScoped<IAdminService, AdminService>();
             services.AddScoped<IFileService, FileService>();
             services.AddScoped<IServiceRequestService, ServiceRequestService>();
-            services.AddScoped<IChatService, ChatService>();    
+            services.AddScoped<IChatService, ChatService>();
+            services.AddScoped<IBidService, BidService>();
 
             services.AddCors(options =>
             {
@@ -44,8 +57,19 @@ namespace Sala7ly.BLL.Common
                         .WithOrigins(
                             "http://localhost:5173",
                             "http://localhost:4200",
-                            "https://sala7ly.runasp.net"
+                            "https://sala7ly.runasp.net",
+                            "http://localhost:5752"
                         )
+                        .AllowAnyMethod()
+                        .AllowAnyHeader()
+                        .AllowCredentials();
+                });
+
+                // Development-only policy
+                options.AddPolicy("AllowAllDev", policy =>
+                {
+                    policy
+                        .SetIsOriginAllowed(_ => true)
                         .AllowAnyMethod()
                         .AllowAnyHeader()
                         .AllowCredentials();
@@ -61,27 +85,6 @@ namespace Sala7ly.BLL.Common
         {
             var jwtSettings = configuration.GetSection("Jwt");
             var secretKey = jwtSettings["Key"];
-            services.AddAuthentication(options =>
-            {
-                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
-                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
-            })
-         .AddJwtBearer(options =>
-         {
-             options.TokenValidationParameters = new TokenValidationParameters
-             {
-                 ValidateIssuer = true,
-                 ValidateAudience = true,
-                 ValidateLifetime = true,
-                 ValidateIssuerSigningKey = true,
-                 ValidIssuer = jwtSettings["Issuer"],
-                 ValidAudience = jwtSettings["Audience"],
-                 IssuerSigningKey = new SymmetricSecurityKey(
-                     Encoding.UTF8.GetBytes(secretKey!)),
-                 NameClaimType = ClaimTypes.NameIdentifier,
-                 ClockSkew = TimeSpan.Zero
-             };
-         });
 
             services.AddIdentity<User, IdentityRole>(options =>
             {
@@ -96,6 +99,46 @@ namespace Sala7ly.BLL.Common
             ).AddEntityFrameworkStores<AppDbContext>()
             .AddDefaultTokenProviders();
 
+            services.AddAuthentication(options =>
+            {
+                options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+                options.DefaultScheme = JwtBearerDefaults.AuthenticationScheme;
+            })
+        .AddJwtBearer(options =>
+        {
+            options.TokenValidationParameters = new TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = jwtSettings["Issuer"],
+                ValidAudience = jwtSettings["Audience"],
+                IssuerSigningKey = new SymmetricSecurityKey(
+                    Encoding.UTF8.GetBytes(secretKey!)),
+                NameClaimType = ClaimTypes.NameIdentifier,
+                ClockSkew = TimeSpan.Zero
+            };
+            options.Events = new JwtBearerEvents
+            {
+                OnMessageReceived = context =>
+                {
+                    var accessToken = context.Request.Query["access_token"];
+
+                    var path = context.HttpContext.Request.Path;
+                    if (!string.IsNullOrEmpty(accessToken) &&
+    (path.StartsWithSegments("/hubs") ||
+     path.StartsWithSegments("/chathub") ||
+     path.StartsWithSegments("/notificationhub")))
+                    {
+                        context.Token = accessToken;
+                    }
+
+                    return Task.CompletedTask;
+                }
+            };
+        });
 
             services.ConfigureApplicationCookie(options =>
             {
@@ -115,10 +158,8 @@ namespace Sala7ly.BLL.Common
                     return Task.CompletedTask;
                 };
             });
+
             return services;
-
         }
-
     }
-
 }

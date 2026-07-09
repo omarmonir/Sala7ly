@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Sala7ly.BLL.DTOs.AiDTOs;
 using Sala7ly.BLL.DTOs.Auth;
 using Sala7ly.BLL.Services.Abstraction;
 using Sala7ly.BLL.Services.Implementation;
@@ -209,4 +210,6 @@ namespace Sala7ly.API.Controllers
     }
 
     public record VerifyOtpRequest(string Email, string Otp);
+
+   
 }

@@ -1,4 +1,5 @@
-﻿using Microsoft.AspNetCore.Authorization;
+﻿using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Sala7ly.BLL.DTOs.TechnicianDTOs;
 using Sala7ly.BLL.Services.Abstraction;
@@ -35,6 +36,24 @@ namespace Sala7ly.API.Controllers
             return Ok(result);
         }
 
+        // GET api/technician/mine
+        [HttpGet("mine")]
+        [Authorize]
+        public async Task<IActionResult> GetMine()
+        {
+            var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            if (string.IsNullOrEmpty(userId))
+                return Unauthorized(new { Message = "Technician not found" });
+
+            var profile = await _technicianService.GetByUserIdAsync(userId);
+
+            if (profile is null)
+                return NotFound(new { Message = "Technician profile not found" });
+
+            return Ok(profile);
+        }
+
         // POST api/technician/register
         [HttpPost("register")]
         [AllowAnonymous]
@@ -44,7 +63,8 @@ namespace Sala7ly.API.Controllers
             if (!ModelState.IsValid) return BadRequest(ModelState);
 
             var success = await _technicianService.AddAsync(dto);
-            if (!success) return Conflict(new { message = "البريد الإلكتروني مستخدم بالفعل" });
+            if (!success)
+                return BadRequest(new { message = "تعذّر إنشاء الحساب. تأكد من أن البريد غير مستخدم وأن كلمة المرور تستوفي الشروط (8 أحرف على الأقل، تحتوي على حرف كبير وصغير ورقم ورمز خاص)." });
 
             return StatusCode(201, new { message = "تم إنشاء حساب الفني بنجاح، في انتظار الموافقة" });
         }

@@ -13,5 +13,7 @@ namespace Sala7ly.BLL.DTOs.TechnicianDTOs
 
         // technician profile fields
         public int ExperienceYears { get; set; }
+
+        public List<int> CategoryIds { get; set; } = new();
     }
 }

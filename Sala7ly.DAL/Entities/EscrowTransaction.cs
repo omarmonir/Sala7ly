@@ -17,6 +17,7 @@ namespace Sala7ly.DAL.Entities
 
         public EscrowStatus Status { get; private set; } = EscrowStatus.PendingDeposit;
         public string ProviderRef { get; private set; }  // external transaction ID
+        public string? StripeChargeId { get; private set; }
         public string ProviderReceiptUrl { get; private set; }  // nullable
 
         public DateTime? DepositedAt { get; private set; }
@@ -29,5 +30,59 @@ namespace Sala7ly.DAL.Entities
         public TechnicianProfile Technician { get; private set; }
         public Dispute Dispute { get; private set; }
         public ICollection<WalletTransaction> WalletTransactions { get; private set; }
+        public static EscrowTransaction Create(
+            int serviceRequestId,
+            int customerId,
+            int technicianId,
+            decimal amount,
+            decimal platformFeePercent,
+            string stripePaymentIntentId)
+        {
+            var fee = Math.Round(amount * platformFeePercent, 2);
+            var payout = amount - fee;
+
+            return new EscrowTransaction
+            {
+                ServiceRequestId = serviceRequestId,
+                CustomerId = customerId,
+                TechnicianId = technicianId,
+                Amount = amount,
+                PlatformFee = fee,
+                TechnicianPayout = payout,
+                Status = EscrowStatus.PendingDeposit,
+                ProviderRef = stripePaymentIntentId
+            };
+        }
+
+        // ── Domain Methods ────────────────────────────────────
+        public void MarkDeposited(string chargeId)
+        {
+            Status = EscrowStatus.Held;
+            StripeChargeId = chargeId;
+            DepositedAt = DateTime.UtcNow;
+        }
+
+        public void MarkReleased()
+        {
+            Status = EscrowStatus.Released;
+            ReleasedAt = DateTime.UtcNow;
+        }
+
+        public void MarkRefunded()
+        {
+            Status = EscrowStatus.Refunded;
+            RefundedAt = DateTime.UtcNow;
+        }
+
+        public void MarkDisputed(int disputeId)
+        {
+            Status = EscrowStatus.Disputed;
+            DisputeId = disputeId;
+        }
+
+        public void SetReceiptUrl(string url)
+        {
+            ProviderReceiptUrl = url;
+        }
     }
 }

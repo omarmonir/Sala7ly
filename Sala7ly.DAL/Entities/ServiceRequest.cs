@@ -6,7 +6,7 @@ namespace Sala7ly.DAL.Entities
     {
         public ServiceRequest() { }
 
-        public ServiceRequest(string title, string description, List<string> imageUrls, Urgency urgency, BookingMode bookingMode, 
+        public ServiceRequest(string title, string description, List<string> imageUrls, Urgency urgency, BookingMode bookingMode,
                               bool isEmergency, DateTime scheduledAt, int customerId, int addressId, int categoryId)
         {
             Title = title;
@@ -39,6 +39,9 @@ namespace Sala7ly.DAL.Entities
         public int AddressId { get; private set; }
         public int CategoryId { get; private set; }
         public int? SelectedBidId { get; private set; }
+        public string? AiSummary { get; private set; }
+        public int? AiSuggestedCategoryId { get; private set; }
+        public string? AiRefinementJson { get; private set; }
 
         // navigation
         public CustomerProfile Profile { get; private set; }
@@ -49,13 +52,74 @@ namespace Sala7ly.DAL.Entities
         public ICollection<Bid> Bids { get; private set; }
         public ICollection<ChatMessage> ChatMessages { get; private set; }
         public ICollection<Ai_Interaction> AiInteractions { get; private set; }
-        public ICollection<TechnicianPortfolio> TechnicianPortfolios { get; private set; }
         public Review Review { get; private set; }
+
+        public void AssignBid(int bidId)
+        {
+            if (Status != Status.open)
+                throw new InvalidOperationException("Request is not open.");
+            SelectedBidId = bidId;
+            Status = Status.assigned;
+        }
+
+        public void Start()
+        {
+            if (Status != Status.assigned)
+                throw new InvalidOperationException("Request must be assigned first.");
+            Status = Status.in_progress;
+            StartedAt = DateTime.UtcNow;
+        }
 
         public void MarkCompleted()
         {
+            if (Status != Status.in_progress)
+                throw new InvalidOperationException("Request must be in progress.");
             Status = Status.completed;
-            CompletedAt = DateTime.Now;
+            CompletedAt = DateTime.UtcNow;
+        }
+        public void Cancel()
+        {
+            if (Status == Status.completed)
+                throw new InvalidOperationException("Cannot cancel a completed request.");
+            Status = Status.cancelled;
+        }
+
+        public void SetAiData(string summary, decimal priceMin, decimal priceMax)
+        {
+            AiSummary = summary;
+            AiPriceMin = priceMin;
+            AiPriceMax = priceMax;
+        }
+
+        public void UpdateDetails(string title, string description, DateTime scheduledAt)
+        {
+            Title = title;
+            Description = description;
+            ScheduledAt = scheduledAt;
+        }
+
+
+        public void MarkInProgress()
+        {
+            Status = Status.in_progress;
+        }
+
+
+        public void SetAiRefinement(string summary, int? suggestedCategoryId, string refinementJson)
+        {
+            AiSummary = summary;
+            AiSuggestedCategoryId = suggestedCategoryId;
+            AiRefinementJson = refinementJson;
+        }
+
+        /// <summary>
+        /// Allows the AI matching service to correct the category when the
+        /// customer selected the wrong one. CategoryId has a private setter
+        /// so all mutations must go through domain methods.
+        /// </summary>
+        public void UpdateCategory(int categoryId)
+        {
+            CategoryId = categoryId;
         }
     }
 }

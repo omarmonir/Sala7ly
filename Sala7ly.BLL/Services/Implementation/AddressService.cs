@@ -1,25 +1,31 @@
-﻿using Sala7ly.BLL.DTOs.AddressDTOs;
+﻿using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using Sala7ly.BLL.DTOs.AddressDTOs;
 using Sala7ly.BLL.Mapper;
 using Sala7ly.BLL.Services.Abstraction;
 using Sala7ly.DAL.Repositories.Abstraction;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 
 namespace Sala7ly.BLL.Services.Implementation
 {
     public class AddressService : IAddressService
     {
         private readonly IAddressRepository _addressRepo;
+        private readonly ICustomerRepository _customerRepo;
 
-        public AddressService(IAddressRepository addressRepo)
+        public AddressService(IAddressRepository addressRepo, ICustomerRepository customerRepo)
         {
             _addressRepo = addressRepo;
+            _customerRepo = customerRepo;
         }
 
-        public async Task<IEnumerable<AddressDto>> GetAllAsync(int customerId)
+        public async Task<IEnumerable<AddressDto>> GetAllByUserIdAsync(string userId)
         {
-            var addresses = await _addressRepo.GetAllByCustomerAsync(customerId);
+            var customer = await _customerRepo.GetByUserIdAsync(userId);
+            if (customer == null)
+                return Enumerable.Empty<AddressDto>();
+
+            var addresses = await _addressRepo.GetAllByCustomerAsync(customer.Id);
             return addresses.Select(AddressMapper.ToDto);
         }
 

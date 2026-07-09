@@ -1,4 +1,6 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using System.Security.Claims;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Sala7ly.BLL.DTOs.AddressDTOs;
 using Sala7ly.BLL.Services.Abstraction;
 using Sala7ly.DAL.Entities;
@@ -18,10 +20,11 @@ namespace Sala7ly.API.Controllers
 
         // GET api/addresses?customerProfileId=1
         [HttpGet]
-        public async Task<IActionResult> GetAll([FromQuery] int customerId) 
-
+        [Authorize(Roles = "Customer")]
+        public async Task<IActionResult> GetAll()
         {
-            var addresses = await _addressService.GetAllAsync(customerId);
+            var userId = User.FindFirst(ClaimTypes.NameIdentifier)!.Value;
+            var addresses = await _addressService.GetAllByUserIdAsync(userId);
             return Ok(addresses);
         }
 

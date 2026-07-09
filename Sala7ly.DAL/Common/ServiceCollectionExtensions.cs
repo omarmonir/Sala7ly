@@ -16,16 +16,26 @@ namespace Sala7ly.DAL.Common
             IConfiguration configuration)
         {
             services.AddDbContext<AppDbContext>(options =>
-                options.UseSqlServer(configuration.GetConnectionString("ServerConnection")));
+                options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
             AppContext.SetSwitch("Switch.System.Net.Mail.MailMessage.AllowUnicode", true);
+            services.AddScoped<INotificationRepository, NotificationRepository>();
             services.AddScoped<ITechnicianProfileRepository, TechnicianProfileRepository>();
             services.AddScoped<ITechnicianPortfolioRepository, TechnicianPortfolioRepository>();
             services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
             services.AddScoped<IServiceCategoryRepository, ServiceCategoryRepository>();
             services.AddScoped<ICustomerRepository, CustomerRepository>();
             services.AddScoped<IAddressRepository, AddressRepository>();
+            services.AddScoped<IReviewRepository, ReviewRepository>();
             services.AddScoped<IServiceRequestRepository, ServiceRequestRepository>();
+            services.AddScoped<ITechnicianVerificationRepository, TechnicianVerificationRepository>();
             services.AddScoped<IChatMessageRepository, ChatMessageRepository>();
+            services.AddScoped<IBidRepository, BidRepository>();
+            services.AddScoped<IWalletRepository, WalletRepository>();
+            services.AddScoped<IWalletTransactionRepository, WalletTransactionRepository>();
+            services.AddScoped<IEscrowRepository, EscrowRepository>();
+            services.AddScoped<IAiInteractionRepository, AiInteractionRepository>();
+            services.AddScoped<IAdminRepository, AdminRepository>();
+
             return services;    
         }
     }

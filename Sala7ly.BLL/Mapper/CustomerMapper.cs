@@ -55,7 +55,6 @@ namespace Sala7ly.BLL.Mapper
         {
             user.Name = dto.Name;
             user.PhoneNumber = dto.PhoneNumber;
-            user.SetImageUrl(dto.ImageUrl);
         }
 
 

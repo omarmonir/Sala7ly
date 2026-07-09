@@ -1,6 +1,4 @@
-﻿using Sala7ly.DAL.Enums;
-
-namespace Sala7ly.BLL.DTOs.ServiceRequestDTOs
+﻿namespace Sala7ly.BLL.DTOs.ServiceRequestDTOs
 {
     public class ServiceRequestDetailsDto
     {
@@ -20,5 +18,12 @@ namespace Sala7ly.BLL.DTOs.ServiceRequestDTOs
         public int CategoryId { get; set; }
         public int AddressId { get; set; }
         public DateTime? CreatedOn { get; set; }
+        public string? CustomerName { get; set; }
+        public string? CategoryName { get; set; }
+        public string? Address { get; set; }
+
+        public string? AiSummary { get; set; }
+        public int? AiSuggestedCategoryId { get; set; }
+        public string? AiRefinementJson { get; set; }
     }
 }

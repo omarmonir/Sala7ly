@@ -1,13 +1,14 @@
-﻿using Sala7ly.BLL.DTOs.AddressDTOs;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Text;
+using Sala7ly.BLL.DTOs.AddressDTOs;
 
 namespace Sala7ly.BLL.Services.Abstraction
 {
     public interface IAddressService
     {
-        Task<IEnumerable<AddressDto>> GetAllAsync(int customerId);
+        Task<IEnumerable<AddressDto>> GetAllByUserIdAsync(string userId);
+
         Task<bool> CreateAsync(CreateAddressDto dto);
 
         Task<bool> UpdateAsync(int id, UpdateAddressDto dto);

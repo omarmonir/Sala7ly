@@ -31,7 +31,6 @@ namespace Sala7ly.BLL.Mapper
         {
             user.Name = dto.Name;
             user.PhoneNumber = dto.PhoneNumber;
-            user.ImageUrl = dto.ImageUrl;
         }
 
         // apply update dto onto existing TechnicianProfile

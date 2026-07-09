@@ -16,9 +16,10 @@ namespace Sala7ly.DAL.Entities
 
         public Address() { }
 
-        public Address(int customerId, string street, string city, string district)
+        public Address(int customerId, string title, string street, string city, string district)
         {
             CustomerId = customerId;
+            Title = title;
             Street = street;
             City = city;
             District = district;

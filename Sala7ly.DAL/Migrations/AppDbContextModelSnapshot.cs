@@ -601,9 +601,6 @@ namespace Sala7ly.DAL.Migrations
                     b.Property<int?>("DisputeId")
                         .HasColumnType("int");
 
-                    b.Property<int>("DisputeId1")
-                        .HasColumnType("int");
-
                     b.Property<bool?>("IsDeleted")
                         .HasColumnType("bit");
 
@@ -635,6 +632,9 @@ namespace Sala7ly.DAL.Migrations
                         .HasColumnType("nvarchar(20)")
                         .HasDefaultValue("PendingDeposit");
 
+                    b.Property<string>("StripeChargeId")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<int>("TechnicianId")
                         .HasColumnType("int");
 
@@ -652,7 +652,7 @@ namespace Sala7ly.DAL.Migrations
 
                     b.HasIndex("CustomerId");
 
-                    b.HasIndex("DisputeId1");
+                    b.HasIndex("DisputeId");
 
                     b.HasIndex("ServiceRequestId")
                         .IsUnique();
@@ -734,7 +734,6 @@ namespace Sala7ly.DAL.Migrations
                         .HasColumnType("datetime2");
 
                     b.Property<string>("DeepLink")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("DeletedBy")
@@ -753,7 +752,6 @@ namespace Sala7ly.DAL.Migrations
                         .HasColumnType("bit");
 
                     b.Property<string>("Metadata")
-                        .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("ReadAt")
@@ -976,6 +974,15 @@ namespace Sala7ly.DAL.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<string>("AiRefinementJson")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("AiSuggestedCategoryId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("AiSummary")
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("BookingMode")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -1072,59 +1079,6 @@ namespace Sala7ly.DAL.Migrations
                     b.ToTable("ServiceRequests");
                 });
 
-            modelBuilder.Entity("Sala7ly.DAL.Entities.TechnicianCategory", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("CategoryId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("CreatedOn")
-                        .HasColumnType("datetime2");
-
-                    b.Property<string>("DeletedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("DeletedOn")
-                        .HasColumnType("datetime2");
-
-                    b.Property<bool?>("IsDeleted")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("IsPrimary")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("bit")
-                        .HasDefaultValue(false);
-
-                    b.Property<int>("TechnicianId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("UpdatedBy")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("UpdatedOn")
-                        .HasColumnType("datetime2");
-
-                    b.Property<int>("YearsInCategory")
-                        .HasColumnType("int");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("CategoryId");
-
-                    b.HasIndex("TechnicianId", "CategoryId")
-                        .IsUnique();
-
-                    b.ToTable("TechnicianCategories");
-                });
-
             modelBuilder.Entity("Sala7ly.DAL.Entities.TechnicianPortfolio", b =>
                 {
                     b.Property<int>("Id")
@@ -1133,11 +1087,6 @@ namespace Sala7ly.DAL.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Caption")
-                        .IsRequired()
-                        .HasMaxLength(255)
-                        .HasColumnType("nvarchar(255)");
-
                     b.Property<string>("CreatedBy")
                         .HasColumnType("nvarchar(max)");
 
@@ -1150,23 +1099,27 @@ namespace Sala7ly.DAL.Migrations
                     b.Property<DateTime?>("DeletedOn")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("ImageUrl")
+                    b.Property<string>("Description")
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("ImageUrlAfter")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("ImageUrlBefore")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<bool?>("IsDeleted")
                         .HasColumnType("bit");
 
-                    b.Property<int?>("ServiceRequestId")
-                        .HasColumnType("int");
-
                     b.Property<int>("TechnicianId")
                         .HasColumnType("int");
 
-                    b.Property<string>("Type")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
+                    b.Property<string>("Title")
+                        .HasMaxLength(150)
+                        .HasColumnType("nvarchar(150)");
 
                     b.Property<string>("UpdatedBy")
                         .HasColumnType("nvarchar(max)");
@@ -1178,8 +1131,6 @@ namespace Sala7ly.DAL.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ServiceRequestId");
 
                     b.HasIndex("TechnicianId");
 
@@ -1197,10 +1148,9 @@ namespace Sala7ly.DAL.Migrations
                     b.Property<DateTime?>("ApprovedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("AvgResponseTime")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
+                    b.Property<int>("AvgResponseTime")
+                        .HasMaxLength(12)
+                        .HasColumnType("int");
 
                     b.Property<string>("Bio")
                         .IsRequired()
@@ -1208,6 +1158,9 @@ namespace Sala7ly.DAL.Migrations
 
                     b.Property<int>("CancelledJobs")
                         .HasColumnType("int");
+
+                    b.Property<string>("CommonComplaints")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("CompletedJobs")
                         .HasColumnType("int");
@@ -1224,8 +1177,13 @@ namespace Sala7ly.DAL.Migrations
                     b.Property<DateTime?>("DeletedOn")
                         .HasColumnType("datetime2");
 
+                    b.Property<DateTime?>("EmbeddingUpdatedAt")
+                        .HasColumnType("datetime2");
+
                     b.Property<string>("EmbeddingVector")
-                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("EmbeddingVectorJson")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("ExperienceYears")
@@ -1247,6 +1205,18 @@ namespace Sala7ly.DAL.Migrations
                     b.Property<double>("OverallRating")
                         .HasColumnType("float");
 
+                    b.Property<string>("ReviewSummary")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<double?>("SentimentScore")
+                        .HasColumnType("float");
+
+                    b.Property<string>("StripeAccountId")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<bool>("StripeOnboardingDone")
+                        .HasColumnType("bit");
+
                     b.Property<DateTime?>("SubscriptionExpiresAt")
                         .HasColumnType("datetime2");
 
@@ -1256,6 +1226,12 @@ namespace Sala7ly.DAL.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)")
                         .HasDefaultValue("Free");
+
+                    b.Property<DateTime?>("SummaryUpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("TopStrengths")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<int>("TotalReviews")
                         .HasColumnType("int");
@@ -1292,34 +1268,41 @@ namespace Sala7ly.DAL.Migrations
                     b.Property<DateTime?>("CreatedOn")
                         .HasColumnType("datetime2");
 
+                    b.Property<string>("DegreeCertificateUrls")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
                     b.Property<string>("DeletedBy")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<DateTime?>("DeletedOn")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("DocType")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
-                    b.Property<string>("DocumentUrl")
+                    b.Property<string>("DocumentUrlBack")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("DocumentUrlFront")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("IdNumber")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
 
                     b.Property<bool?>("IsDeleted")
                         .HasColumnType("bit");
 
                     b.Property<string>("RejectionReason")
-                        .IsRequired()
                         .HasMaxLength(500)
                         .HasColumnType("nvarchar(500)");
 
                     b.Property<DateTime?>("ReviewedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("ReviewedByAdminId")
-                        .HasColumnType("int");
+                    b.Property<string>("ReviewedByAdminId")
+                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Status")
                         .IsRequired()
@@ -1575,6 +1558,59 @@ namespace Sala7ly.DAL.Migrations
                     b.ToTable("WalletTransactions", (string)null);
                 });
 
+            modelBuilder.Entity("TechnicianCategory", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("CategoryId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("CreatedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("DeletedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("DeletedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool?>("IsDeleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsPrimary")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<int>("TechnicianId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("UpdatedBy")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<DateTime?>("UpdatedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("YearsInCategory")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
+
+                    b.HasIndex("TechnicianId", "CategoryId")
+                        .IsUnique();
+
+                    b.ToTable("TechnicianCategories");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
@@ -1743,9 +1779,8 @@ namespace Sala7ly.DAL.Migrations
 
                     b.HasOne("Sala7ly.DAL.Entities.Dispute", "Dispute")
                         .WithMany()
-                        .HasForeignKey("DisputeId1")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
+                        .HasForeignKey("DisputeId")
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("Sala7ly.DAL.Entities.ServiceRequest", "ServiceRequest")
                         .WithOne("EscrowTransaction")
@@ -1887,39 +1922,13 @@ namespace Sala7ly.DAL.Migrations
                     b.Navigation("SelectedBid");
                 });
 
-            modelBuilder.Entity("Sala7ly.DAL.Entities.TechnicianCategory", b =>
-                {
-                    b.HasOne("Sala7ly.DAL.Entities.ServiceCategory", "Category")
-                        .WithMany("TechnicianCategories")
-                        .HasForeignKey("CategoryId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("Sala7ly.DAL.Entities.TechnicianProfile", "Technician")
-                        .WithMany("Categories")
-                        .HasForeignKey("TechnicianId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Category");
-
-                    b.Navigation("Technician");
-                });
-
             modelBuilder.Entity("Sala7ly.DAL.Entities.TechnicianPortfolio", b =>
                 {
-                    b.HasOne("Sala7ly.DAL.Entities.ServiceRequest", "ServiceRequest")
-                        .WithMany("TechnicianPortfolios")
-                        .HasForeignKey("ServiceRequestId")
-                        .OnDelete(DeleteBehavior.Restrict);
-
                     b.HasOne("Sala7ly.DAL.Entities.TechnicianProfile", "Technician")
                         .WithMany("Portfolio")
                         .HasForeignKey("TechnicianId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
-
-                    b.Navigation("ServiceRequest");
 
                     b.Navigation("Technician");
                 });
@@ -1975,6 +1984,25 @@ namespace Sala7ly.DAL.Migrations
                     b.Navigation("Wallet");
                 });
 
+            modelBuilder.Entity("TechnicianCategory", b =>
+                {
+                    b.HasOne("Sala7ly.DAL.Entities.ServiceCategory", "Category")
+                        .WithMany("TechnicianCategories")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Sala7ly.DAL.Entities.TechnicianProfile", "Technician")
+                        .WithMany("Categories")
+                        .HasForeignKey("TechnicianId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Category");
+
+                    b.Navigation("Technician");
+                });
+
             modelBuilder.Entity("Sala7ly.DAL.Entities.Address", b =>
                 {
                     b.Navigation("ServiceRequests");
@@ -2016,8 +2044,6 @@ namespace Sala7ly.DAL.Migrations
 
                     b.Navigation("Review")
                         .IsRequired();
-
-                    b.Navigation("TechnicianPortfolios");
                 });
 
             modelBuilder.Entity("Sala7ly.DAL.Entities.TechnicianProfile", b =>

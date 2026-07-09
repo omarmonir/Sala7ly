@@ -7,6 +7,7 @@ using Sala7ly.BLL.Services.Abstraction;
 using Sala7ly.BLL.Services.Implementation;
 using Sala7ly.DAL.Common;
 using Sala7ly.DAL.Entities;
+using Stripe;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -40,10 +41,37 @@ builder.Services.AddSwaggerGen(c =>
         }
     });
 });
+StripeConfiguration.ApiKey = builder.Configuration["Stripe:SecretKey"];
+builder.Services.AddDistributedMemoryCache();
+
+// IGitHubAiClient now lives in Sala7ly.BLL.Services.Abstraction (was
+// incorrectly declared in the DAL, which must never own an AI-provider
+// contract), hence no DAL using is needed here anymore.
+builder.Services.AddSingleton<IGitHubAiClient>(sp =>
+{
+    var config = sp.GetRequiredService<IConfiguration>();
+    var useMock = bool.Parse(config["AI:GitHub:UseMock"] ?? "false");
+    return useMock
+        ? new MockGitHubAiClient()
+        : new GitHubAiClient(config);
+});
 
 builder.Services.AddDataAccessLayer(builder.Configuration);
 builder.Services.AddBusinessLogicLayer(builder.Configuration);
 builder.Services.AddScoped<IFilePathProvider, WebHostEnvironmentPathProvider>();
+
+// Named HttpClients used by the AI module. The old "GitHubModels" client
+// (with its own separate GitHubModels:Token config key) is gone — every
+// LLM call now goes through IGitHubAiClient / AI:GitHub:* instead.
+builder.Services.AddHttpClient("ImageDownloader", client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(15);
+});
+builder.Services.AddHttpClient("GeminiEmbeddings", client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(15);
+});
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
@@ -69,7 +97,7 @@ using (var scope = app.Services.CreateScope())
             Email = testEmail,
             EmailConfirmed = true,
         };
-        adminUser.Activate(); 
+        adminUser.Activate();
 
         var result = await userManager.CreateAsync(adminUser, "Omar@1234");
         if (result.Succeeded)
@@ -78,15 +106,26 @@ using (var scope = app.Services.CreateScope())
 }
 
 app.UseStaticFiles();
-    app.UseSwagger();
-    app.UseSwaggerUI(c =>
+app.UseSwagger();
+app.UseSwaggerUI(c =>
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "Sala7ly API v1"));
 
-
 app.UseHttpsRedirection();
-app.UseCors("AllowAll");
+
+if (app.Environment.IsDevelopment())
+{
+    app.UseCors("AllowAllDev");
+}
+else
+{
+    app.UseCors("AllowAll");
+}
+
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
 app.MapHub<ChatHub>("/chathub");
+app.MapHub<BiddingHub>("/hubs/bidding");
+app.MapHub<NotificationHub>("/notificationhub");
+
 await app.RunAsync();

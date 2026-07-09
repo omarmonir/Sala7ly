@@ -3,6 +3,7 @@ using System.Text.Json;
 using Microsoft.Extensions.Caching.Distributed;
 using Microsoft.Extensions.Configuration;
 using Sala7ly.BLL.DTOs.AiDTOs;
+using Sala7ly.BLL.Services;
 using Sala7ly.BLL.Services.Abstraction;
 using Sala7ly.DAL.Enums;
 using Sala7ly.DAL.Repositories.Abstraction;
@@ -35,9 +36,15 @@ namespace Sala7ly.BLL.Services.Implementation
                 ?? throw new KeyNotFoundException("الطلب غير موجود."); // was a plain Exception — controller's 404 branch never fired
 
             // ── 1. Cache check ────────────────────────────────────────────────
+            var descriptionHash = Convert.ToHexString(
+                System.Security.Cryptography.SHA256.HashData(
+                    System.Text.Encoding.UTF8.GetBytes(request.Description ?? string.Empty)))
+                .Substring(0, 16);
+
             var cacheKey = $"price_estimate_{request.CategoryId}" +
                            $"_{request.Address?.District}" +
-                           $"_{request.Urgency}";
+                           $"_{request.Urgency}" +
+                           $"_{descriptionHash}";
 
             var cached = await _cache.GetStringAsync(cacheKey);
             if (cached != null)

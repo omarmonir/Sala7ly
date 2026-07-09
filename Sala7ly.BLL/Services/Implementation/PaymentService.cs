@@ -44,8 +44,8 @@ namespace Sala7ly.BLL.Services.Implementation
             var request = await _requestRepo.GetByIdWithPartiesAsync(dto.RequestId);
             if (request == null)
                 throw new Exception("Request not found.");
-            if (request.Status != Status.assigned)
-                throw new Exception("Request must be assigned before payment.");
+            if (request.Status != Status.assigned && request.Status != Status.in_progress)
+                throw new Exception("Request must be assigned or in progress before payment.");
             if (request.SelectedBid == null)
                 throw new Exception("No accepted bid found.");
 
@@ -86,6 +86,13 @@ namespace Sala7ly.BLL.Services.Implementation
 
             await _escrowRepo.AddAsync(escrow);
             await _escrowRepo.SaveChangesAsync();
+
+            // Auto-transition request to in_progress if still assigned
+            if (request.Status == Status.assigned)
+            {
+                request.Start();
+                await _requestRepo.SaveChangesAsync();
+            }
 
             return new CreatePaymentResultDto
             {
@@ -135,17 +142,18 @@ namespace Sala7ly.BLL.Services.Implementation
         {
             var escrow = await _escrowRepo.GetByProviderRefAsync(paymentIntentId);
             if (escrow == null || escrow.Status != EscrowStatus.PendingDeposit)
-                return; 
+                return;
 
             escrow.MarkDeposited(chargeId);
             await _escrowRepo.SaveChangesAsync();
 
-            // Update request status
+            // Update request status only if still assigned.
             var request = await _requestRepo.GetByIdAsync(escrow.ServiceRequestId);
-            request?.Start();
-            await _requestRepo.SaveChangesAsync();
-
-
+            if (request != null && request.Status == Status.assigned)
+            {
+                request.Start();
+                await _requestRepo.SaveChangesAsync();
+            }
         }
 
         public async Task HandlePaymentReleasedAsync(string paymentIntentId)
@@ -157,10 +165,12 @@ namespace Sala7ly.BLL.Services.Implementation
             escrow.MarkReleased();
             await _escrowRepo.SaveChangesAsync();
 
+            // Credit to pending balance (security hold)
             await _walletService.CreditAsync(
                 userId: escrow.Technician.UserId,
                 amount: escrow.TechnicianPayout,
                 description: $"أرباح طلب رقم #{escrow.ServiceRequestId}",
+                type: WalletTransactionType.payout,
                 escrowId: escrow.Id
             );
 
@@ -168,9 +178,9 @@ namespace Sala7ly.BLL.Services.Implementation
             request?.MarkCompleted();
             await _requestRepo.SaveChangesAsync();
 
-          
+            // Auto-release pending balance immediately (can be changed to scheduled release)
+            await _walletService.ReleasePendingBalanceAsync(escrow.Technician.UserId, escrow.TechnicianPayout);
 
-            
         }
 
         public async Task HandlePaymentRefundedAsync(string paymentIntentId)
@@ -185,6 +195,7 @@ namespace Sala7ly.BLL.Services.Implementation
                 userId: escrow.Customer.UserId,
                 amount: escrow.Amount,
                 description: $"استرداد طلب رقم #{escrow.ServiceRequestId}",
+                type: WalletTransactionType.refund,
                 escrowId: escrow.Id
             );
 

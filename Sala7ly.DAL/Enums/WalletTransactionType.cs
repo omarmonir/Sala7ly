@@ -6,6 +6,13 @@ namespace Sala7ly.DAL.Enums
 {
     public enum WalletTransactionType
     {
-        credit, debit, refund, promotion, withdrawal, payout
+        credit,
+        debit,
+        refund,
+        promotion,
+        withdrawal,
+        payout,
+        deposit,
+        transfer
     }
 }

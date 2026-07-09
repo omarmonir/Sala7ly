@@ -72,6 +72,11 @@ builder.Services.AddHttpClient("GeminiEmbeddings", client =>
     client.Timeout = TimeSpan.FromSeconds(15);
 });
 
+builder.Services.AddHttpClient("GeminiEmbedding", client =>
+{
+    client.DefaultRequestHeaders.Add("Accept", "application/json");
+});
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())

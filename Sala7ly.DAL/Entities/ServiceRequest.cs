@@ -72,8 +72,8 @@ namespace Sala7ly.DAL.Entities
 
         public void MarkCompleted()
         {
-            if (Status != Status.in_progress)
-                throw new InvalidOperationException("Request must be in progress.");
+            if (Status != Status.in_progress && Status != Status.assigned)
+                throw new InvalidOperationException("Request must be assigned or in progress.");
             Status = Status.completed;
             CompletedAt = DateTime.UtcNow;
         }

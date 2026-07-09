@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Sala7ly.DAL.DataBase;
 
@@ -11,9 +12,11 @@ using Sala7ly.DAL.DataBase;
 namespace Sala7ly.DAL.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260701053752_AddDisputeRelationshipConfig")]
+    partial class AddDisputeRelationshipConfig
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -284,11 +287,17 @@ namespace Sala7ly.DAL.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(450)");
 
+                    b.Property<string>("UserId1")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("RequestId");
 
                     b.HasIndex("UserId");
+
+                    b.HasIndex("UserId1");
 
                     b.ToTable("AI_INTERACTIONS", (string)null);
                 });
@@ -512,9 +521,8 @@ namespace Sala7ly.DAL.Migrations
                     b.Property<int>("EscrowTransactionId")
                         .HasColumnType("int");
 
-                    b.Property<string>("InitiatedByUserId")
-                        .IsRequired()
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int>("InitiatedByUserId")
+                        .HasColumnType("int");
 
                     b.Property<bool?>("IsDeleted")
                         .HasColumnType("bit");
@@ -535,8 +543,8 @@ namespace Sala7ly.DAL.Migrations
                     b.Property<DateTime?>("ResolvedAt")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("ResolvedByAdminId")
-                        .HasColumnType("nvarchar(max)");
+                    b.Property<int?>("ResolvedByAdminId")
+                        .HasColumnType("int");
 
                     b.Property<int>("ServiceRequestId")
                         .HasColumnType("int");
@@ -1679,10 +1687,16 @@ namespace Sala7ly.DAL.Migrations
                         .HasForeignKey("RequestId")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("Sala7ly.DAL.Entities.User", "User")
+                    b.HasOne("Sala7ly.DAL.Entities.User", null)
                         .WithMany("AiInteractions")
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Sala7ly.DAL.Entities.User", "User")
+                        .WithMany()
+                        .HasForeignKey("UserId1")
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("ServiceRequest");

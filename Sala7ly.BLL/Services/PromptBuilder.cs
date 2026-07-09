@@ -1,4 +1,4 @@
-﻿namespace Sala7ly.BLL.Services.Implementation
+﻿namespace Sala7ly.BLL.Services
 {
     /// <summary>
     /// Central place for every AI prompt string. Keeps services thin and
@@ -113,6 +113,9 @@
                 {{answersBlock}}
                 الفئات المتاحة (id:name): {{string.Join("، ", categories)}}
 
+                الإجابات السابقة ({answersCount} من أصل 3 كحد أقصى):
+                {previousQA}
+
                 المطلوب:
                 1. أعد كتابة الوصف بشكل احترافي وواضح بالعربية (3-5 جمل).
                 2. اختر الفئة الأنسب من القائمة.
@@ -199,6 +202,32 @@
                 """;
         }
 
+        public static string SmartMatchingUser(
+            string title,
+            string description,
+            int customerChosenCategoryId,
+            string categoryList)
+            => $$"""
+                أنت مساعد متخصص في تصنيف طلبات الصيانة المنزلية في مصر.
+
+                الطلب:
+                العنوان: "{title}"
+                الوصف: "{description}"
+                الفئة التي اختارها العميل: {customerChosenCategoryId}
+
+                الفئات المتاحة (id:الاسم):
+                {categoryList}
+
+                المطلوب:
+                - حدد الفئة الأنسب من القائمة أعلاه.
+                - إذا كانت فئة العميل صحيحة، أعد نفس الرقم.
+                - أعد JSON فقط.
+
+                {
+                  "suggestedCategoryId": <رقم صحيح>
+                }
+                """;
+
         // ── Dispute Analysis (prompt ready; no service wired up yet) ───────────
 
         public static string DisputeAnalysisUser(
@@ -223,6 +252,36 @@
                   "recommended_amount": <number or null>,
                   "reasoning": "<التبرير>"
                 }
+                """;
+        }
+
+        public static string SupportChatSystem()
+        {
+            return "أنت مساعد دعم للعملاء في منصة Sala7ly. " +
+                   "أجب بصيغة واضحة ومباشرة بالعربية. " +
+                   "استخدم JSON فقط للاستجابة دون شرح إضافي.";
+        }
+
+        public static string InsightsUser(
+            int totalRequests,
+            int completedRequests,
+            int activeRequests,
+            int totalTechnicians,
+            int approvedTechnicians,
+            int totalReviews)
+        {
+            return $$"""
+                أنت محلل أداء منصة خدمات منزلية.
+                استعرض هذه الأرقام وأنشئ ملخصاً وارداً من 3 إلى 5 رؤى عملية بالعربية:
+
+                إجمالي الطلبات: {{totalRequests}}
+                الطلبات المكتملة: {{completedRequests}}
+                الطلبات النشطة: {{activeRequests}}
+                إجمالي الفنيين: {{totalTechnicians}}
+                الفنيين المعتمدين: {{approvedTechnicians}}
+                إجمالي التقييمات: {{totalReviews}}
+
+                أعد نصاً موجزاً من ثلاثة إلى خمسة نقاط واضحة، ولا ترد JSON.
                 """;
         }
     }

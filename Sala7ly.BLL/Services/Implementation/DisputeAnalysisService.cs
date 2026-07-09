@@ -1,4 +1,7 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using System;
+using System.Text.Json;
+using System.Threading.Tasks;
+using Microsoft.Extensions.Configuration;
 using Sala7ly.BLL.DTOs.AiDTOs;
 using Sala7ly.BLL.Services.Abstraction;
 using Sala7ly.DAL.Entities;
@@ -12,8 +15,8 @@ namespace Sala7ly.BLL.Services.Implementation
         private readonly IAiInteractionRepository _aiRepo;
 
         public DisputeAnalysisService(
-     IGitHubAiClient ai,
-     IConfiguration config,
+            IGitHubAiClient ai,
+            IConfiguration config,
      IAiInteractionRepository aiRepo)
      : base(ai, config, aiRepo)
         {

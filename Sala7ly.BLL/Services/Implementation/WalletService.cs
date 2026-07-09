@@ -176,8 +176,9 @@ namespace Sala7ly.BLL.Services.Implementation
                 throw new Exception("Bank account is required.");
 
             var wallet = await GetOrCreateWalletAsync(userId);
+            // Withdraw from available balance, not pending balance
             if (wallet.Balance < dto.Amount)
-                throw new Exception("Insufficient balance.");
+                throw new Exception("Insufficient available balance.");
 
             wallet.Balance -= dto.Amount;
             wallet.TotalWithdrawn += dto.Amount;
@@ -212,10 +213,17 @@ namespace Sala7ly.BLL.Services.Implementation
                 throw new Exception("Credit amount must be greater than zero.");
 
             var wallet = await GetOrCreateWalletAsync(userId);
-            wallet.Balance += amount;
 
+            // For payouts, use pending balance first (security hold)
             if (type == WalletTransactionType.payout)
+            {
+                wallet.PendingBalance += amount;
                 wallet.TotalEarned += amount;
+            }
+            else
+            {
+                wallet.Balance += amount;
+            }
 
             var tx = new WalletTransaction
             {
@@ -225,6 +233,32 @@ namespace Sala7ly.BLL.Services.Implementation
                 BalanceAfter = wallet.Balance,
                 Type = type,
                 Description = description
+            };
+            tx.MarkCreated(userId);
+
+            await _transactionRepo.AddAsync(tx);
+            await _walletRepo.SaveChangesAsync();
+        }
+
+        public async Task ReleasePendingBalanceAsync(string userId, decimal amount)
+        {
+            if (amount <= 0)
+                throw new Exception("Release amount must be greater than zero.");
+
+            var wallet = await GetOrCreateWalletAsync(userId);
+            if (wallet.PendingBalance < amount)
+                throw new Exception("Insufficient pending balance.");
+
+            wallet.PendingBalance -= amount;
+            wallet.Balance += amount;
+
+            var tx = new WalletTransaction
+            {
+                WalletId = wallet.Id,
+                Amount = amount,
+                BalanceAfter = wallet.Balance,
+                Type = WalletTransactionType.credit,
+                Description = "إطلاق رصيد معلق"
             };
             tx.MarkCreated(userId);
 

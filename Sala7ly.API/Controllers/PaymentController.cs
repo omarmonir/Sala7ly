@@ -95,7 +95,7 @@ namespace Sala7ly.API.Controllers
 
         // POST /api/webhooks/stripe ← NO [Authorize] here
         [AllowAnonymous]
-        [HttpPost("/api/webhooks/stripe")]
+        [HttpPost("webhook")]
         public async Task<IActionResult> StripeWebhook()
         {
             var json = await new StreamReader(HttpContext.Request.Body).ReadToEndAsync();

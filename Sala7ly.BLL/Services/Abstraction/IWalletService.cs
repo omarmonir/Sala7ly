@@ -12,6 +12,7 @@ namespace Sala7ly.BLL.Services.Abstraction
         Task TransferAsync(string fromUserId, string toUserId, decimal amount, string description);
         Task CreditAsync(string userId, decimal amount, string description, WalletTransactionType type, int? escrowId = null);
         Task DebitAsync(string userId, decimal amount, string description, WalletTransactionType type, int? escrowId = null);
+        Task ReleasePendingBalanceAsync(string userId, decimal amount);
         Task HandleStripePaymentIntentSucceededAsync(PaymentIntent intent);
         Task HandleStripeChargeRefundedAsync(Charge charge);
         Task<bool> ConfirmTopUpAsync(string sessionId, string currentUserId);

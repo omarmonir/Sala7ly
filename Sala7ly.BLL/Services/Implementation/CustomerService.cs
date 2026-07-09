@@ -1,35 +1,36 @@
 ﻿using Microsoft.AspNetCore.Identity;
 using Sala7ly.BLL.DTOs.CustomerDTOs;
-using Sala7ly.BLL.DTOs.ServiceRequestDTOs;
 using Sala7ly.BLL.Mapper;
 using Sala7ly.BLL.Services.Abstraction;
 using Sala7ly.DAL.Entities;
 using Sala7ly.DAL.Enums;
 using Sala7ly.DAL.Repositories.Abstraction;
-using Sala7ly.DAL.Repositories.Implementation;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
 
 namespace Sala7ly.BLL.Services.Implementation
 {
     public class CustomerService : ICustomerService
     {
-
         private readonly ICustomerRepository _customerRepo;
         private readonly UserManager<User> _userManager;
         private readonly IFileService _fileService;
         private readonly INotificationService _notificationService;
+        private readonly IReviewRepository _reviewRepo;
 
         public CustomerService(ICustomerRepository customerRepo,
                               UserManager<User> userManager,
                               IFileService fileService,
-                              INotificationService notificationService)
+                              INotificationService notificationService,
+                              IReviewRepository reviewRepo)
         {
             _customerRepo = customerRepo;
             _userManager = userManager;
             _fileService = fileService;
             _notificationService = notificationService;
+            _reviewRepo = reviewRepo;
         }
 
         // Queries 
@@ -41,7 +42,9 @@ namespace Sala7ly.BLL.Services.Implementation
             if (profile is null)
                 return null;
 
-            return CustomerMapper.ToDetailsDto(profile);
+            var dto = CustomerMapper.ToDetailsDto(profile);
+            dto.TotalReviews = await CountReviewsAsync(profile.UserId);
+            return dto;
         }
 
         public async Task<IEnumerable<CustomerListItemDto>> GetAllAsync()
@@ -58,7 +61,16 @@ namespace Sala7ly.BLL.Services.Implementation
             if (profile is null)
                 return null;
 
-            return CustomerMapper.ToDetailsDto(profile);
+            var dto = CustomerMapper.ToDetailsDto(profile);
+            dto.TotalReviews = await CountReviewsAsync(userId);
+            return dto;
+        }
+
+        // counts the reviews this customer has written
+        private async Task<int> CountReviewsAsync(string userId)
+        {
+            var reviews = await _reviewRepo.GetByReviewerIdAsync(userId);
+            return reviews?.Count ?? 0;
         }
 
         // ── Commands
@@ -170,5 +182,4 @@ namespace Sala7ly.BLL.Services.Implementation
         }
 
     }
-
 }

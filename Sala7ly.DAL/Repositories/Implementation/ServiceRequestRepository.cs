@@ -107,5 +107,20 @@ namespace Sala7ly.DAL.Repositories.Implementation
                          && r.IsDeleted != true)
                 .OrderByDescending(r => r.CreatedOn)
                 .ToListAsync();
+
+
+        // ── GET COMPLETED BY CATEGORY (RAG context for AI endpoints) ─────────
+        public async Task<IEnumerable<ServiceRequest>> GetCompletedByCategoryAsync(
+            int categoryId, int limit = 20)
+            => await _context.ServiceRequests
+                .Include(r => r.Category)
+                .Include(r => r.SelectedBid)
+                .Where(r => r.CategoryId == categoryId
+                         && r.Status == Status.completed
+                         && r.IsDeleted != true)
+                .OrderByDescending(r => r.CompletedAt)
+                .Take(limit)
+                .ToListAsync();
+
     }
 }

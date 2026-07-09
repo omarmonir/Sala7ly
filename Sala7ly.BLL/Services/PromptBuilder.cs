@@ -284,5 +284,156 @@
                 أعد نصاً موجزاً من ثلاثة إلى خمسة نقاط واضحة، ولا ترد JSON.
                 """;
         }
+
+
+
+
+        // ── RAG: Follow-up Questions (database-driven) ────────────────────────
+
+        /// <summary>
+        /// Builds a follow-up question prompt enriched with patterns extracted
+        /// from similar completed historical requests.
+        /// historicalPatterns = list of strings like:
+        ///   "وصف: تسريب مياه | أسئلة سابقة: هل التسريب مستمر؟ / هل المياه نظيفة؟"
+        /// </summary>
+        public static string RequestFollowUpWithContextUser(
+            string rawDescription,
+            IReadOnlyList<string> categories,
+            IReadOnlyList<string> previousAnswers,
+            IReadOnlyList<string> historicalPatterns)
+        {
+            var previousQA = previousAnswers.Count > 0
+                ? string.Join("\n", previousAnswers.Select((a, i) => $"إجابة {i + 1}: {a}"))
+                : "لا توجد إجابات سابقة.";
+
+            var patternsBlock = historicalPatterns.Count > 0
+                ? string.Join("\n", historicalPatterns.Select((p, i) => $"- {p}"))
+                : "لا توجد بيانات تاريخية متاحة.";
+
+            return $$"""
+        [TaskType: FollowUpQuestion]
+        أنت مساعد متخصص في خدمات الصيانة المنزلية في مصر.
+        العميل كتب: "{{rawDescription}}"
+        الفئات المتاحة: {{string.Join("، ", categories)}}
+
+        الإجابات السابقة ({{previousAnswers.Count}} من أصل 3 كحد أقصى):
+        {{previousQA}}
+
+        أنماط من طلبات مشابهة مكتملة سابقاً (استخدمها لتوجيه سؤالك):
+        {{patternsBlock}}
+
+        قواعد صارمة:
+        - إذا وصل عدد الإجابات إلى 3 أو أكثر، أعد: {"question": "", "isComplete": true}
+        - إذا كان الوصف واضحاً بما يكفي، أعد: {"question": "", "isComplete": true}
+        - لا تكرر سؤالاً سبق الإجابة عليه
+        - اسأل سؤالاً واحداً جديداً فقط بالعربية مستوحى من الأنماط التاريخية
+        - الأسئلة التاريخية هي مرجع، لا تنسخها حرفياً
+
+        رد بـ JSON فقط: {"question": "...", "isComplete": false}
+        """;
+        }
+
+        // ── RAG: Request Refinement (database-driven) ─────────────────────────
+
+        /// <summary>
+        /// Builds a refinement prompt enriched with example descriptions
+        /// from similar completed requests so the LLM rewrites in the same
+        /// style and vocabulary as successful historical jobs.
+        /// exampleDescriptions = list of AiSummary / Description strings
+        /// from completed requests in the same category.
+        /// </summary>
+        public static string RequestRefineWithContextUser(
+            string rawDescription,
+            IReadOnlyList<string> categories,
+            IReadOnlyList<string> answers,
+            IReadOnlyList<string> exampleDescriptions)
+        {
+            var answersBlock = answers.Count > 0
+                ? string.Join("\n", answers.Select((a, i) => $"إجابة {i + 1}: {a}"))
+                : "لا توجد إجابات.";
+
+            var examplesBlock = exampleDescriptions.Count > 0
+                ? string.Join("\n", exampleDescriptions.Select((d, i) => $"مثال {i + 1}: \"{d}\""))
+                : "لا توجد أمثلة تاريخية.";
+
+            return $$"""
+        [TaskType: RefineRequest]
+        أنت مساعد متخصص في خدمات الصيانة المنزلية في مصر.
+
+        وصف العميل الأصلي: "{{rawDescription}}"
+
+        إجابات العميل على أسئلة المتابعة:
+        {{answersBlock}}
+
+        الفئات المتاحة (id:name): {{string.Join("، ", categories)}}
+
+        أمثلة من طلبات مكتملة ناجحة في نفس الفئة (استخدمها كمرجع للأسلوب والمصطلحات):
+        {{examplesBlock}}
+
+        المطلوب:
+        1. أعد كتابة الوصف بشكل احترافي وواضح بالعربية (3-5 جمل).
+        2. استخدم نفس أسلوب الأمثلة التاريخية ومصطلحاتها التقنية.
+        3. اختر الفئة الأنسب من القائمة.
+        4. حدد مستوى الاستعجال: low / medium / high.
+        5. لا تختلق معلومات غير موجودة في وصف العميل أو إجاباته.
+
+        رد بـ JSON فقط:
+        {
+          "refinedDescription": "...",
+          "aiSummary": "جملة واحدة ملخص",
+          "suggestedCategoryId": 0,
+          "suggestedUrgency": "medium"
+        }
+        """;
+        }
+
+        // ── RAG: Price Estimation (database-driven, richer context) ──────────
+
+        /// <summary>
+        /// Builds a price estimation prompt that includes details of similar
+        /// completed jobs (parts used, duration, diagnosis) instead of just
+        /// aggregate numbers. similarJobs = list of strings like:
+        ///   "تشخيص: استبدال كمبروسر | قطع: كمبروسر + فريون | السعر: 800 ج | المدة: 3 ساعات"
+        /// </summary>
+        public static string PriceEstimationWithContextUser(
+            string categoryAr,
+            string description,
+            string urgency,
+            string district,
+            decimal avgPrice,
+            decimal minPrice,
+            decimal maxPrice,
+            IReadOnlyList<string> similarJobs)
+        {
+            var jobsBlock = similarJobs.Count > 0
+                ? string.Join("\n", similarJobs.Select((j, i) => $"- {j}"))
+                : "لا توجد وظائف مشابهة مكتملة.";
+
+            return $$"""
+        [TaskType: PriceEstimation]
+        أنت خبير تسعير خدمات منزلية في مصر.
+        قدّر نطاق السعر لهذا الطلب وأعد JSON فقط بدون أي نص إضافي.
+
+        الفئة: {{categoryAr}}
+        الوصف: {{description}}
+        الإلحاح: {{urgency}}
+        المنطقة: {{district}}
+
+        إحصائيات تاريخية (جنيه مصري):
+          متوسط: {{avgPrice}}، أدنى: {{minPrice}}، أعلى: {{maxPrice}}
+
+        وظائف مشابهة مكتملة فعلياً (أهم من الإحصائيات — استخدمها أساساً):
+        {{jobsBlock}}
+
+        الصيغة المطلوبة:
+        {
+          "min_price": <number>,
+          "max_price": <number>,
+          "fair_price": <number>,
+          "price_factors": ["<factor1>", "<factor2>"],
+          "confidence": <0.0-1.0>
+        }
+        """;
+        }
     }
 }

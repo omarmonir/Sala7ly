@@ -12,6 +12,8 @@ namespace Sala7ly.BLL.Services.Implementation
 {
     public class PriceEstimationService : BaseAiService, IPriceEstimationService
     {
+        private const int MaxSimilarJobs = 15;
+
         private readonly IServiceRequestRepository _requestRepo;
         private readonly IBidRepository _bidRepo;
         private readonly IDistributedCache _cache;
@@ -33,12 +35,13 @@ namespace Sala7ly.BLL.Services.Implementation
         public async Task<PriceEstimateDto> EstimateAsync(int requestId)
         {
             var request = await _requestRepo.GetByIdWithDetailsAsync(requestId)
-                ?? throw new KeyNotFoundException("الطلب غير موجود."); // was a plain Exception — controller's 404 branch never fired
+                ?? throw new KeyNotFoundException("الطلب غير موجود.");
 
-            // ── 1. Cache check ────────────────────────────────────────────────
+            // ── 1. Cache check ────────────────────────────────────────────
             var descriptionHash = Convert.ToHexString(
                 System.Security.Cryptography.SHA256.HashData(
-                    System.Text.Encoding.UTF8.GetBytes(request.Description ?? string.Empty)))
+                    System.Text.Encoding.UTF8.GetBytes(
+                        request.Description ?? string.Empty)))
                 .Substring(0, 16);
 
             var cacheKey = $"price_estimate_{request.CategoryId}" +
@@ -50,7 +53,7 @@ namespace Sala7ly.BLL.Services.Implementation
             if (cached != null)
                 return JsonSerializer.Deserialize<PriceEstimateDto>(cached)!;
 
-            // ── 2. Historical prices ──────────────────────────────────────────
+            // ── 2. Historical prices (aggregate) ─────────────────────────
             var historicalPrices = await _bidRepo
                 .GetAcceptedPricesByCategoryAsync(request.CategoryId, limit: 50);
 
@@ -58,33 +61,53 @@ namespace Sala7ly.BLL.Services.Implementation
             var minPrice = historicalPrices.Any() ? historicalPrices.Min() : 150m;
             var maxPrice = historicalPrices.Any() ? historicalPrices.Max() : 600m;
 
-            // ── 3. Build prompt ───────────────────────────────────────────────
-            var userPrompt = PromptBuilder.PriceEstimationUser(
-                categoryAr: request.Category.NameAr,
-                description: request.AiSummary ?? request.Description,
-                urgency: request.Urgency.ToString(),
-                district: request.Address?.District ?? "غير محدد",
-                avgPrice: avgPrice,
-                minPrice: minPrice,
-                maxPrice: maxPrice
-            );
+            // ── 3. RAG: fetch similar completed jobs ──────────────────────
+            var similarRequests = await _requestRepo
+                .GetCompletedByCategoryAsync(request.CategoryId, MaxSimilarJobs);
 
-            // ── 4. Call the model (Haiku = cheapest / fastest) ────────────────
+            var similarJobs = similarRequests
+                .Select(r => BuildJobSummary(r))
+                .Where(s => !string.IsNullOrWhiteSpace(s))
+                .Take(8)
+                .ToList();
+
+            // ── 4. Build enriched prompt ──────────────────────────────────
+            var userPrompt = similarJobs.Count > 0
+                ? PromptBuilder.PriceEstimationWithContextUser(
+                    categoryAr: request.Category.NameAr,
+                    description: request.AiSummary ?? request.Description,
+                    urgency: request.Urgency.ToString(),
+                    district: request.Address?.District ?? "غير محدد",
+                    avgPrice: avgPrice,
+                    minPrice: minPrice,
+                    maxPrice: maxPrice,
+                    similarJobs: similarJobs)
+                : PromptBuilder.PriceEstimationUser(
+                    categoryAr: request.Category.NameAr,
+                    description: request.AiSummary ?? request.Description,
+                    urgency: request.Urgency.ToString(),
+                    district: request.Address?.District ?? "غير محدد",
+                    avgPrice: avgPrice,
+                    minPrice: minPrice,
+                    maxPrice: maxPrice);  // fallback: original prompt
+
+            // ── 5. Call the model ─────────────────────────────────────────
             var sw = Stopwatch.StartNew();
             var json = await CallAsync(HaikuModel, userPrompt, maxTokens: 300);
             sw.Stop();
 
             var result = ParseJson<PriceEstimateDto>(json);
 
-            // ── 5. Persist AI price range on the request ──────────────────────
+            // ── 6. Persist AI price range on the request ──────────────────
             request.SetAiData(
                 request.AiSummary ?? request.Description,
                 result.MinPrice,
                 result.MaxPrice);
             await _requestRepo.SaveChangesAsync();
 
-            // ── 6. Cache result ───────────────────────────────────────────────
-            var ttlMinutes = int.Parse(_config["AI:Cache:PriceEstimateTtlMinutes"] ?? "60");
+            // ── 7. Cache result ───────────────────────────────────────────
+            var ttlMinutes = int.Parse(
+                _config["AI:Cache:PriceEstimateTtlMinutes"] ?? "60");
             await _cache.SetStringAsync(
                 cacheKey,
                 JsonSerializer.Serialize(result),
@@ -93,7 +116,7 @@ namespace Sala7ly.BLL.Services.Implementation
                     AbsoluteExpirationRelativeToNow = TimeSpan.FromMinutes(ttlMinutes)
                 });
 
-            // ── 7. Log AI interaction (now shared via BaseAiService) ───────────
+            // ── 8. Log AI interaction ─────────────────────────────────────
             await LogInteractionAsync(
                 requestId,
                 request.Profile?.UserId,
@@ -105,6 +128,35 @@ namespace Sala7ly.BLL.Services.Implementation
                 (int)sw.ElapsedMilliseconds);
 
             return result;
+        }
+
+        /// <summary>
+        /// Converts a completed ServiceRequest into a one-line summary for the
+        /// price estimation prompt. Uses accepted bid price when available.
+        /// Example output:
+        ///   "وصف: استبدال ضاغط تكييف | السعر المقبول: 750 ج | مدة التنفيذ: 2 ساعات"
+        /// </summary>
+        private static string BuildJobSummary(DAL.Entities.ServiceRequest r)
+        {
+            var parts = new List<string>();
+
+            var desc = r.AiSummary ?? r.Description;
+            if (!string.IsNullOrWhiteSpace(desc))
+                parts.Add($"وصف: {desc[..Math.Min(80, desc.Length)]}");
+
+            if (r.SelectedBid != null && r.SelectedBid.Price > 0)
+                parts.Add($"السعر المقبول: {r.SelectedBid.Price} ج");
+            else if (r.AiPriceMin > 0)
+                parts.Add($"السعر المقدّر: {r.AiPriceMin}-{r.AiPriceMax} ج");
+
+            if (r.StartedAt.HasValue && r.CompletedAt.HasValue)
+            {
+                var hours = (r.CompletedAt.Value - r.StartedAt.Value).TotalHours;
+                if (hours > 0 && hours < 24)
+                    parts.Add($"مدة التنفيذ: {hours:F1} ساعة");
+            }
+
+            return string.Join(" | ", parts);
         }
     }
 }

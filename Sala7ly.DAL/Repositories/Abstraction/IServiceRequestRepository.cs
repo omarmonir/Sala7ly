@@ -11,5 +11,12 @@ namespace Sala7ly.DAL.Repositories.Abstraction
         Task<IEnumerable<ServiceRequest>> GetAllAsync();
         Task<ServiceRequest?> GetByIdWithDetailsAsync(int requestId);
         Task<IEnumerable<ServiceRequest>> GetAssignedByTechnicianUserIdAsync(string userId);
+
+        /// <summary>
+        /// Returns completed requests in the same category, including their
+        /// AI summary and accepted bid price — used as RAG context for
+        /// follow-up questions and price estimation.
+        /// </summary>
+        Task<IEnumerable<ServiceRequest>> GetCompletedByCategoryAsync(int categoryId, int limit = 20);
     }
 }

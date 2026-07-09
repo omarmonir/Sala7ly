@@ -41,8 +41,24 @@ namespace Sala7ly.API.Controllers
         {
             try
             {
-                await _walletService.TopUpAsync(CurrentUserId, dto);
-                return Ok(new ApiResponse<string> { Success = true, Message = "تم شحن المحفظة بنجاح" });
+                var result = await _walletService.TopUpAsync(CurrentUserId, dto);
+                return Ok(new ApiResponse<TopUpResultDto> { Success = true, Data = result });
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(new ApiResponse<string> { Success = false, Message = ex.Message });
+            }
+        }
+
+        [HttpGet("confirm")]
+        public async Task<IActionResult> Confirm([FromQuery(Name = "session_id")] string sessionId)
+        {
+            try
+            {
+                var ok = await _walletService.ConfirmTopUpAsync(sessionId, CurrentUserId);
+                if (ok)
+                    return Ok(new ApiResponse<string> { Success = true, Message = "Top-up confirmed" });
+                return BadRequest(new ApiResponse<string> { Success = false, Message = "Could not confirm top-up" });
             }
             catch (Exception ex)
             {

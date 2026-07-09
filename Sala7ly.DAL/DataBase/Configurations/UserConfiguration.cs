@@ -32,11 +32,6 @@ namespace Sala7ly.DAL.DataBase.Configurations
             builder.Property(u => u.IsActive)
                    .HasDefaultValue(true);
 
-            builder.HasMany(u => u.AiInteractions)
-                   .WithOne()
-                   .HasForeignKey("UserId")
-                   .OnDelete(DeleteBehavior.Restrict);
-
             builder.HasOne(u =>u.CustomerProfile)
                    .WithOne(c => c.User)
                    .HasForeignKey<CustomerProfile>(c => c.UserId)

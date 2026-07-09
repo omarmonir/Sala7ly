@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Sala7ly.DAL.DataBase;
 
@@ -11,9 +12,11 @@ using Sala7ly.DAL.DataBase;
 namespace Sala7ly.DAL.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260629182842_editaiinteraction")]
+    partial class editaiinteraction
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -596,6 +599,9 @@ namespace Sala7ly.DAL.Migrations
                     b.Property<int?>("DisputeId")
                         .HasColumnType("int");
 
+                    b.Property<int>("DisputeId1")
+                        .HasColumnType("int");
+
                     b.Property<bool?>("IsDeleted")
                         .HasColumnType("bit");
 
@@ -647,7 +653,7 @@ namespace Sala7ly.DAL.Migrations
 
                     b.HasIndex("CustomerId");
 
-                    b.HasIndex("DisputeId");
+                    b.HasIndex("DisputeId1");
 
                     b.HasIndex("ServiceRequestId")
                         .IsUnique();
@@ -1768,8 +1774,9 @@ namespace Sala7ly.DAL.Migrations
 
                     b.HasOne("Sala7ly.DAL.Entities.Dispute", "Dispute")
                         .WithMany()
-                        .HasForeignKey("DisputeId")
-                        .OnDelete(DeleteBehavior.Restrict);
+                        .HasForeignKey("DisputeId1")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.HasOne("Sala7ly.DAL.Entities.ServiceRequest", "ServiceRequest")
                         .WithOne("EscrowTransaction")

@@ -6,9 +6,8 @@ namespace Sala7ly.BLL.Services.Abstraction
     public interface IImageAnalysisService
     {
         Task<ImageAnalysisDto> AnalyzeImageAsync(string base64Image, string mediaType = "image/jpeg");
-
+        Task<ImageAnalysisDto> AnalyzeImageFromFormFileAsync(IFormFile file);
         Task<ImageAnalysisDto> AnalyzeRequestImageAsync(int requestId, string imageUrl, string? userId = null);
-
         Task<ImageAnalysisDto> AnalyzeMultipleImagesAsync(int requestId, List<string> imageUrls, string? userId = null);
     }
 }

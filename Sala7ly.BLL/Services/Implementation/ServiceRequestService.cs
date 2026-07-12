@@ -15,6 +15,8 @@ namespace Sala7ly.BLL.Services.Implementation
         private readonly INotificationService _notificationService;
         private readonly ITechnicianProfileRepository _technicianProfileRepository;
         private readonly IRequestDispatchService _requestDispatchService;
+        private readonly IEscrowRepository _escrowRepository;
+        private readonly IWalletService _walletService;
 
         public ServiceRequestService(
             IServiceRequestRepository serviceRequestRepository,
@@ -22,12 +24,18 @@ namespace Sala7ly.BLL.Services.Implementation
             IAddressRepository addressRepository,
             INotificationService notificationService,
             ITechnicianProfileRepository technicianProfileRepository,
-            IRequestDispatchService requestDispatchService)
+            IRequestDispatchService requestDispatchService,
+            IEscrowRepository escrowRepository,
+            IWalletService walletService)
         {
             _serviceRequestRepository = serviceRequestRepository;
             _customerRepository = customerRepository;
             _addressRepository = addressRepository;
             _notificationService = notificationService;
+            _technicianProfileRepository = technicianProfileRepository;
+            _requestDispatchService = requestDispatchService;
+            _escrowRepository = escrowRepository;
+            _walletService = walletService;
             _technicianProfileRepository = technicianProfileRepository;
             _requestDispatchService = requestDispatchService;
         }
@@ -220,6 +228,27 @@ namespace Sala7ly.BLL.Services.Implementation
             _serviceRequestRepository.Update(request);
             await _serviceRequestRepository.SaveChangesAsync();
 
+            // Release payment from escrow to technician wallet
+            var escrow = await _escrowRepository.GetByRequestIdAsync(id);
+            if (escrow != null && escrow.Status == EscrowStatus.Held)
+            {
+                // Mark escrow as released
+                escrow.MarkReleased();
+                await _escrowRepository.SaveChangesAsync();
+
+                // Credit technician wallet with their payout (after platform fee)
+                await _walletService.CreditAsync(
+                    userId: escrow.Technician.UserId,
+                    amount: escrow.TechnicianPayout,
+                    description: $"أرباح طلب رقم #{escrow.ServiceRequestId}",
+                    type: WalletTransactionType.payout,
+                    escrowId: escrow.Id
+                );
+
+                // Auto-release from pending to available balance
+                await _walletService.ReleasePendingBalanceAsync(escrow.Technician.UserId, escrow.TechnicianPayout);
+            }
+
             var technicianUserId = request.SelectedBid?.Technician?.UserId;
             if (!string.IsNullOrEmpty(technicianUserId))
             {
@@ -227,7 +256,7 @@ namespace Sala7ly.BLL.Services.Implementation
                     userId: technicianUserId,
                     type: NotificationType.system,
                     title: "تم إكمال الطلب ✅",
-                    body: "تم وضع علامة \"مكتمل\" على أحد الطلبات التي قمت بها.",
+                    body: "تم وضع علامة \"مكتمل\" على أحد الطلبات التي قمت BitmapFactory وتم تحرير الدفع.",
                     metadata: $"{{\"requestId\": {request.Id}}}");
             }
 

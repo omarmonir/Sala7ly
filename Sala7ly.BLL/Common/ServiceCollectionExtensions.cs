@@ -22,7 +22,6 @@ namespace Sala7ly.BLL.Common
         {
             services.AddJwtAuthentication(configuration);
             services.AddScoped<IAuthService, AuthService>();
-            services.AddScoped<IAiSupportService, AiSupportService>();
             services.AddScoped<IEmailService, EmailService>();
             services.AddScoped<ICustomerService, CustomerService>();
             services.AddScoped<IServiceCategoryService, ServiceCategoryService>();
@@ -62,7 +61,8 @@ namespace Sala7ly.BLL.Common
                             "http://localhost:5173",
                             "http://localhost:4200",
                             "https://sala7ly.runasp.net",
-                            "http://localhost:5752"
+                            "http://localhost:5752",
+                            "https://salla7ly-lac.vercel.app"
                         )
                         .AllowAnyMethod()
                         .AllowAnyHeader()

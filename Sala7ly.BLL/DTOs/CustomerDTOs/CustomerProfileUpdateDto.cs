@@ -17,10 +17,6 @@ namespace Sala7ly.BLL.DTOs.CustomerDTOs
         public string PhoneNumber { get; set; }
 
         public IFormFile? Image { get; set; }
-
-
-        public string AddressDetails { get; set; }
-
     }
 }
 

@@ -19,7 +19,10 @@ namespace Sala7ly.DAL.Repositories.Implementation
 
         public async Task<List<TechnicianProfile>> GetAllAsync()
         {
-            return await _context.TechnicianProfiles.Include(u => u.User).ToListAsync();
+            return await _context.TechnicianProfiles
+                .Include(u => u.User)
+                
+                .ToListAsync();
         }
 
         public async Task<TechnicianProfile> GetByIdAsync(int id)

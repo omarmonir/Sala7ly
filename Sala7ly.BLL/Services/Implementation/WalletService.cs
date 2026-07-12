@@ -232,7 +232,8 @@ namespace Sala7ly.BLL.Services.Implementation
                 Amount = amount,
                 BalanceAfter = wallet.Balance,
                 Type = type,
-                Description = description
+                Description = description,
+                Reference = escrowId.HasValue ? $"ESCROW-{escrowId.Value}" : $"CREDIT-{Guid.NewGuid().ToString().Substring(0, 8).ToUpper()}"
             };
             tx.MarkCreated(userId);
 
@@ -258,7 +259,8 @@ namespace Sala7ly.BLL.Services.Implementation
                 Amount = amount,
                 BalanceAfter = wallet.Balance,
                 Type = WalletTransactionType.credit,
-                Description = "إطلاق رصيد معلق"
+                Description = "إطلاق رصيد معلق",
+                Reference = $"RELEASE-{Guid.NewGuid().ToString().Substring(0, 8).ToUpper()}"
             };
             tx.MarkCreated(userId);
 
@@ -284,7 +286,8 @@ namespace Sala7ly.BLL.Services.Implementation
                 Amount = -amount,
                 BalanceAfter = wallet.Balance,
                 Type = type,
-                Description = description
+                Description = description,
+                Reference = escrowId.HasValue ? $"ESCROW-{escrowId.Value}" : $"DEBIT-{Guid.NewGuid().ToString().Substring(0, 8).ToUpper()}"
             };
             tx.MarkCreated(userId);
 

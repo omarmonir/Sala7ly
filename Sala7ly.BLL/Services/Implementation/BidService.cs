@@ -5,6 +5,7 @@ using Sala7ly.BLL.Mapper;
 using Sala7ly.BLL.Services.Abstraction;
 using Sala7ly.DAL.Enums;
 using Sala7ly.DAL.Repositories.Abstraction;
+using Sala7ly.DAL.Entities;
 
 namespace Sala7ly.BLL.Services.Implementation
 {
@@ -15,19 +16,25 @@ namespace Sala7ly.BLL.Services.Implementation
         private readonly ITechnicianProfileRepository _technicianRepo;
         private readonly IHubContext<BiddingHub> _biddingHub;
         private readonly INotificationService _notificationService;
+        private readonly IWalletService _walletService;
+        private readonly IEscrowRepository _escrowRepo;
 
         public BidService(
             IBidRepository bidRepo,
             IServiceRequestRepository requestRepo,
             ITechnicianProfileRepository technicianRepo,
             IHubContext<BiddingHub> biddingHub,
-            INotificationService notificationService)
+            INotificationService notificationService,
+            IWalletService walletService,
+            IEscrowRepository escrowRepo)
         {
             _bidRepo = bidRepo;
             _requestRepo = requestRepo;
             _technicianRepo = technicianRepo;
             _biddingHub = biddingHub;
             _notificationService = notificationService;
+            _walletService = walletService;
+            _escrowRepo = escrowRepo;
         }
 
         // ── Submit Bid ────────────────────────────────────────
@@ -99,7 +106,29 @@ namespace Sala7ly.BLL.Services.Implementation
             if (bid.ServiceRequest.Status != Status.open)
                 throw new Exception("Request is no longer open.");
 
-            // 4. Accept this bid via domain method
+            // 4. Check and debit wallet balance
+            var bidAmount = bid.Price;
+            await _walletService.DebitAsync(
+                userId: customerUserId,
+                amount: bidAmount,
+                description: $"دفع لطلب رقم #{bid.ServiceRequestId} - عرض الفني {bid.Technician.User.Name}",
+                type: WalletTransactionType.debit
+            );
+
+            // 5. Create escrow transaction immediately
+            var escrow = EscrowTransaction.Create(
+                serviceRequestId: bid.ServiceRequestId,
+                customerId: bid.ServiceRequest.CustomerId,
+                technicianId: bid.TechnicianId,
+                amount: bidAmount,
+                platformFeePercent: 0.10m, // 10% platform fee
+                stripePaymentIntentId: $"WALLET-{Guid.NewGuid()}" // Wallet payment marker
+            );
+            escrow.MarkDeposited($"WALLET-{Guid.NewGuid()}"); // Already deposited from wallet
+            await _escrowRepo.AddAsync(escrow);
+            await _escrowRepo.SaveChangesAsync();
+
+            // 6. Accept this bid via domain method
             bid.Accept();
 
             // 5. Update request via domain method

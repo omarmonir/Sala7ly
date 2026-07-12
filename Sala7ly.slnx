@@ -2,4 +2,5 @@
   <Project Path="Sala7ly.API/Sala7ly.API.csproj" />
   <Project Path="Sala7ly.BLL/Sala7ly.BLL.csproj" />
   <Project Path="Sala7ly.DAL/Sala7ly.DAL.csproj" />
+  <Project Path="Salla7ly_Testing/Salla7ly_Testing.csproj" Id="effe38de-c9be-4156-a2d3-34e87dbcb2cd" />
 </Solution>
